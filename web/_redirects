@@ -1,4 +1,0 @@
-/* Netlify Redirects */
-/* Ensure all requests go to index.html for SPA if needed, 
-   though this is a simple static site. */
-/* No special redirects needed for this simple monitor, but keeping it for consistency with Tienda Benito. */
