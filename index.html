@@ -4,11 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Yape Monitor 24/7</title>
+    <title>YAPEOS - Monitor 24/7</title>
 
     <!-- PWA & SEO -->
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#742284">
+    <meta name="theme-color" content="#0b1120">
     <link rel="icon" type="image/png" href="icon-512.png">
     <link rel="apple-touch-icon" href="icon-512.png">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -27,32 +27,38 @@
 <body>
 
     <div class="glass-container">
-        <header>
-            <div class="logo">Yape <span>Live</span></div>
-            <div class="status" id="status-box">
-                <span class="status-dot" id="st-dot"></span>
-                <span id="st-label">...</span>
+        <header class="nutri-header">
+            <div class="logo-group">
+                <div class="logo">YAPE<span>OS</span></div>
+            </div>
+            <div class="status-badge">
+                <span class="status-dot online"></span>
+                <span class="status-label">CONECTADO</span>
             </div>
         </header>
 
+        <!-- Selector de Días (Horizontal Scroll) -->
+        <div id="date-selector" class="date-selector">
+            <!-- Los días se cargarán aquí dinámicamente -->
+        </div>
+
         <div class="summary">
             <div class="card total">
-                <h3>Total Recibido</h3>
+                <h3 id="total-label">Total Recibido</h3>
                 <p id="t-amount">S/ 0.00</p>
             </div>
             <div class="card">
-                <h3>Ventas Hoy</h3>
+                <h3 id="count-label">Ventas Hoy</h3>
                 <p id="t-count">0</p>
             </div>
         </div>
 
-        <div style="margin-bottom: 20px;">
-            <h2 id="view-title"
-                style="font-size: 1.1rem; font-weight: 800; color: #00ffca; margin-bottom: 15px; letter-spacing: 1px;">
-                VENTAS</h2>
-            <div id="notifications-list" class="notifications-list">
-                <!-- Las notificaciones aparecerán aquí -->
-            </div>
+        <div class="section-header">
+            <h2 id="view-title">YAPEOS DEL DÍA</h2>
+        </div>
+
+        <div id="notifications-list" class="notifications-list vertical">
+            <!-- Las notificaciones aparecerán aquí -->
         </div>
 
         <button id="btn-start" class="btn-start" onclick="initSystem()">RECONECTAR</button>

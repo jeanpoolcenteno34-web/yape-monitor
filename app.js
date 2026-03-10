@@ -2,179 +2,187 @@ const S_URL = "https://qjekbbfskzyhjtuoepqj.supabase.co";
 const S_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqZWtiYmZza3p5aGp0dW9lcHFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyOTQ2NjUsImV4cCI6MjA4Nzg3MDY2NX0.1srkJCZJ4ny5G52o76YNPZ2hzbuhgVFVSENNHKlADWE";
 
 let db;
-let t_val = 0;
-let c_val = 0;
+let allNotifications = [];
+let selectedDateKey = "";
 
-function setUI(text, dotClass) {
-    const label = document.getElementById('st-label');
-    const dot = document.getElementById('st-dot');
-    if (label) label.innerText = text;
-    if (dot) dot.className = "status-dot " + dotClass;
+// --- UTILS ---
+
+function formatTime(dateStr) {
+    const d = new Date(dateStr);
+    let hours = d.getHours();
+    const minutes = d.getMinutes().toString().padStart(2, '0');
+    const ampm = hours >= 12 ? 'pm' : 'am';
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    return `${hours}:${minutes} ${ampm}`;
 }
 
+function getDateKey(dateStr) {
+    const d = new Date(dateStr);
+    return d.toISOString().split('T')[0];
+}
+
+// --- CORE LOGIC ---
+
 async function initSystem() {
-    if (typeof window.supabase === 'undefined') {
-        setUI("ERROR: BLOQUEO", "error");
-        const btn = document.getElementById('btn-start');
-        if (btn) btn.style.display = 'inline-block';
-        return;
+    // Clear cache if needed
+    if (localStorage.getItem('clear_cache_v3') !== 'done') {
+        localStorage.clear();
+        localStorage.setItem('clear_cache_v3', 'done');
     }
 
-    try {
-        const btn = document.getElementById('btn-start');
-        if (btn) btn.style.display = 'none';
+    if (typeof window.supabase === 'undefined') return;
 
+    try {
         db = window.supabase.createClient(S_URL, S_KEY);
 
-        // Cargar Historial (Aumentado a 200 para el archivo)
         const { data, error } = await db.from('notificaciones')
             .select('*')
             .order('timestamp', { ascending: false })
-            .limit(200);
+            .limit(500);
 
-        if (error) {
-            setUI("ERROR DB", "error");
-            if (btn) btn.style.display = 'inline-block';
-            return;
-        }
+        if (error) return;
 
-        const viewTitle = document.getElementById('view-title');
-        if (viewTitle) viewTitle.innerText = "VENTAS";
+        // Limpiar datos mayores a 7 días (rolling window)
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        const sevenDaysKey = sevenDaysAgo.toISOString().split('T')[0];
 
-        const list = document.getElementById('notifications-list');
-        if (list) {
-            list.innerHTML = '';
-            t_val = 0; c_val = 0; // Reset para recalcular de historia
-            [...data].reverse().forEach(n => addNotif(n, false));
+        allNotifications = (data || []).filter(n => getDateKey(n.timestamp) >= sevenDaysKey);
+        
+        const todayKey = new Date().toISOString().split('T')[0];
+        selectedDateKey = todayKey;
+        
+        renderApp();
 
-            if (data.length === 0) {
-                list.innerHTML = '<p style="text-align:center; color:rgba(255,255,255,0.3); padding:40px 0;">¡Listo! Esperando tu primer Yape...</p>';
-            }
-        }
-
-        // Tiempo Real con reconexión automática
+        // Tiempo Real
         db.channel('monitor').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notificaciones' }, payload => {
-            addNotif(payload.new, true);
-        }).subscribe(st => {
-            if (st === 'SUBSCRIBED') setUI("CONECTADO", "online");
-        });
+            const newNotif = payload.new;
+            const nk = getDateKey(newNotif.timestamp);
+            
+            // Auto-borrar el mismo día de la semana pasada si existe en memoria
+            cleanOldData();
+            
+            allNotifications.unshift(newNotif);
+            
+            if (nk === selectedDateKey) renderNotifications();
+            renderDateSelector();
+            updateStats();
+            playNotificationSound();
+        }).subscribe();
 
     } catch (e) {
-        setUI("ERROR CRÍTICO", "error");
-        const btn = document.getElementById('btn-start');
-        if (btn) btn.style.display = 'inline-block';
+        console.error(e);
     }
 }
 
-function formatDateHeader(dateStr) {
-    const d = new Date(dateStr);
-    const today = new Date();
-    const yesterday = new Date();
-    yesterday.setDate(today.getDate() - 1);
-
-    if (d.toDateString() === today.toDateString()) return "Hoy";
-    if (d.toDateString() === yesterday.toDateString()) return "Ayer";
-
-    return d.toLocaleDateString('es-PE', { day: '2-digit', month: 'long', year: 'numeric' });
+function cleanOldData() {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const sevenDaysKey = sevenDaysAgo.toISOString().split('T')[0];
+    allNotifications = allNotifications.filter(n => getDateKey(n.timestamp) >= sevenDaysKey);
 }
 
-const dailyBalances = {};
+function renderApp() {
+    renderDateSelector();
+    renderNotifications();
+    updateStats();
+}
 
-function addNotif(n, s) {
-    const list = document.getElementById('notifications-list');
-    if (!list) return;
+function renderDateSelector() {
+    const selector = document.getElementById('date-selector');
+    if (!selector) return;
 
-    if (list.querySelector('p')) list.innerHTML = '';
-
-    const dateKey = new Date(n.timestamp).toLocaleDateString('es-PE');
-    const dateLabel = formatDateHeader(n.timestamp);
-
-    // Buscar o crear la columna del día
-    let dayCol = document.getElementById(`day-${dateKey.replace(/\//g, '-')}`);
-    if (!dayCol) {
-        dayCol = document.createElement('div');
-        dayCol.className = "day-column";
-        dayCol.id = `day-${dateKey.replace(/\//g, '-')}`;
-
-        const dateObj = new Date(n.timestamp);
-        const dayName = dateObj.toLocaleDateString('es-PE', { weekday: 'short' }).replace('.', '').toUpperCase();
-        const dayNum = dateObj.getDate();
-        const isToday = new Date().toLocaleDateString('es-PE') === dateKey;
-
-        dayCol.innerHTML = `
-            <div class="day-header ${isToday ? 'active' : ''}">
-                <div class="day-name">${dayName}</div>
-                <div class="day-number">${dayNum}</div>
-                <div class="day-balance" id="balance-${dayCol.id}">S/ 0.00</div>
-            </div>
-            <div class="day-items" id="items-${dayCol.id}"></div>
+    // Generar exactamente los últimos 7 días
+    const dates = [];
+    for (let i = 0; i < 7; i++) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        dates.push(d.toISOString().split('T')[0]);
+    }
+    
+    selector.innerHTML = '';
+    dates.forEach(dateStr => {
+        const d = new Date(dateStr + "T12:00:00");
+        const dayName = d.toLocaleDateString('es-PE', { weekday: 'short' }).substring(0, 3).toUpperCase();
+        const dayNum = d.getDate();
+        
+        const item = document.createElement('div');
+        item.className = `date-item ${dateStr === selectedDateKey ? 'active' : ''}`;
+        item.onclick = () => {
+            selectedDateKey = dateStr;
+            renderDateSelector();
+            renderNotifications();
+            updateStats();
+        };
+        
+        item.innerHTML = `
+            <span class="day-name">${dayName}</span>
+            <span class="day-num">${dayNum}</span>
         `;
-
-        if (s) list.prepend(dayCol);
-        else list.appendChild(dayCol);
-
-        dailyBalances[dateKey] = 0;
-    }
-
-    const itemsContainer = document.getElementById(`items-${dayCol.id}`);
-    const balanceEl = document.getElementById(`balance-${dayCol.id}`);
-
-    // Extraer monto y actualizar balance diario
-    let amount = 0;
-    if (n.text) {
-        const m = n.text.match(/S\/ ?(\d+(\.\d+)?)/);
-        if (m) {
-            amount = parseFloat(m[1]);
-            dailyBalances[dateKey] = (dailyBalances[dateKey] || 0) + amount;
-            if (balanceEl) balanceEl.innerText = "S/ " + dailyBalances[dateKey].toFixed(2);
-        }
-    }
-
-    // Actualizar contadores globales (opcional, pero los mantenemos)
-    c_val++;
-    const tCount = document.getElementById('t-count');
-    const tAmount = document.getElementById('t-amount');
-    if (tCount) tCount.innerText = c_val;
-    if (amount > 0) {
-        t_val += amount;
-        if (tAmount) tAmount.innerText = "S/ " + t_val.toFixed(2);
-    }
-
-    // Crear el item de notificación
-    const div = document.createElement('div');
-    div.className = "notification-item";
-    const time = new Date(n.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-    div.innerHTML = `<div class="notif-body">
-        <p style='color:#00ffca; font-weight:700; font-size:0.95rem;'>${n.title || 'Yape Recibido'}</p>
-        <p style='font-size:0.85rem; opacity:0.75; line-height:1.3;'>${n.text}</p>
-    </div>
-    <div class="notif-time">${time}</div>`;
-
-    if (s) itemsContainer.prepend(div);
-    else itemsContainer.appendChild(div);
-
-    if (s) {
-        const audio = document.getElementById('yape-sound');
-        if (audio) {
-            audio.currentTime = 0;
-            audio.play().catch(() => { });
-        }
-    }
-}
-
-// Registro del Service Worker para PWA
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js').then(reg => {
-            console.log('SW registrado', reg);
-        }).catch(err => {
-            console.error('SW fallo', err);
-        });
+        selector.appendChild(item);
     });
 }
 
-// AUTO-INICIO AL CARGAR
+function renderNotifications() {
+    const list = document.getElementById('notifications-list');
+    if (!list) return;
+
+    const filtered = allNotifications.filter(n => getDateKey(n.timestamp) === selectedDateKey);
+    
+    list.innerHTML = '';
+    if (filtered.length === 0) {
+        list.innerHTML = '<p style="text-align:center; opacity:0.3; padding:40px 0;">No hay yapeos registrados</p>';
+        return;
+    }
+
+    filtered.forEach(n => {
+        const item = document.createElement('div');
+        item.className = "notification-item";
+        item.innerHTML = `
+            <div class="notif-body">
+                <p>${n.title || 'Yape Recibido'}</p>
+                <p>${n.text || ''}</p>
+            </div>
+            <div class="notif-time">${formatTime(n.timestamp)}</div>
+        `;
+        list.appendChild(item);
+    });
+}
+
+function updateStats() {
+    const tAmount = document.getElementById('t-amount');
+    const tCount = document.getElementById('t-count');
+    const tLabel = document.getElementById('total-label');
+    const cLabel = document.getElementById('count-label');
+    
+    const isToday = getDateKey(new Date()) === selectedDateKey;
+    if (tLabel) tLabel.innerText = isToday ? "Total Recibido Hoy" : "Total del Día";
+    if (cLabel) cLabel.innerText = isToday ? "Ventas Hoy" : "Ventas del Día";
+
+    let dayTotal = 0;
+    let dayCount = 0;
+
+    allNotifications.forEach(n => {
+        if (getDateKey(n.timestamp) === selectedDateKey) {
+            let amount = 0;
+            const m = (n.text || "").match(/S\/ ?(\d+(\.\d+)?)/);
+            if (m) amount = parseFloat(m[1]);
+            dayTotal += amount;
+            dayCount++;
+        }
+    });
+
+    if (tAmount) tAmount.innerText = `S/ ${dayTotal.toFixed(2)}`;
+    if (tCount) tCount.innerText = dayCount;
+}
+
+function playNotificationSound() {
+    const audio = document.getElementById('yape-sound');
+    if (audio && audio.play) audio.play().catch(() => {});
+}
+
+// Init
 window.addEventListener('load', () => {
     setTimeout(initSystem, 300);
 });
