@@ -26,9 +26,10 @@ function getDateKey(dateStr) {
 
 async function initSystem() {
     // Clear cache if needed
-    if (localStorage.getItem('clear_cache_v3') !== 'done') {
+    if (localStorage.getItem('clear_cache_v4') !== 'done') {
         localStorage.clear();
-        localStorage.setItem('clear_cache_v3', 'done');
+        localStorage.setItem('clear_cache_v4', 'done');
+        window.location.reload(); // Force reload once
     }
 
     if (typeof window.supabase === 'undefined') return;
