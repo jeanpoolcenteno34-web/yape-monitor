@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Yape Monitor 24/7</title>
+
+    <!-- PWA & SEO -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#742284">
+    <link rel="icon" type="image/png" href="icon-512.png">
+    <link rel="apple-touch-icon" href="icon-512.png">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="description" content="Monitoreo de pagos Yape en tiempo real 24/7">
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+
+    <!-- Supabase Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div class="glass-container">
+        <header>
+            <div class="logo">Yape <span>Live</span></div>
+            <div class="status" id="status-box">
+                <span class="status-dot" id="st-dot"></span>
+                <span id="st-label">...</span>
+            </div>
+        </header>
+
+        <div class="summary">
+            <div class="card total">
+                <h3>Total Recibido</h3>
+                <p id="t-amount">S/ 0.00</p>
+            </div>
+            <div class="card">
+                <h3>Ventas Hoy</h3>
+                <p id="t-count">0</p>
+            </div>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <h2 id="view-title"
+                style="font-size: 1.1rem; font-weight: 800; color: #00ffca; margin-bottom: 15px; letter-spacing: 1px;">
+                VENTAS</h2>
+            <div id="notifications-list" class="notifications-list">
+                <!-- Las notificaciones aparecerán aquí -->
+            </div>
+        </div>
+
+        <button id="btn-start" class="btn-start" onclick="initSystem()">RECONECTAR</button>
+    </div>
+
+    <!-- Audio para notificaciones (Sonido de Yape) -->
+    <audio id="yape-sound" src="https://www.myinstants.com/media/sounds/yape-notificacion.mp3" preload="auto"></audio>
+
+    <!-- Scripts -->
+    <script src="app.js"></script>
+</body>
+
+</html>
