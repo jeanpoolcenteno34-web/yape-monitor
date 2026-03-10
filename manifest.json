@@ -1,0 +1,17 @@
+{
+    "name": "Yape Live",
+    "short_name": "Yapi",
+    "description": "Yape Live: Notificaciones en tiempo real",
+    "start_url": "./index.html",
+    "display": "standalone",
+    "background_color": "#440b61",
+    "theme_color": "#742284",
+    "icons": [
+        {
+            "src": "icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ]
+}
