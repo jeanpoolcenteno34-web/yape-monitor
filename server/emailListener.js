@@ -23,18 +23,30 @@ function startEmailListener(onNewNotification) {
 
             // Función para procesar correos
             const processMessages = (num) => {
-                const f = imap.seq.fetch(`${box.messages.total - (num - 1)}:*`, { bodies: '' });
+                if (num <= 0) return;
+                const start = Math.max(1, box.messages.total - (num - 1));
+                const f = imap.seq.fetch(`${start}:*`, { bodies: '' });
                 f.on('message', (msg) => {
                     msg.on('body', (stream) => {
                         simpleParser(stream, async (err, parsed) => {
                             if (err) return console.error(err);
-                            const subject = parsed.subject || '';
+                            const subject = (parsed.subject || '').toLowerCase();
                             const text = parsed.text || '';
-                            console.log(`--- [LOG] Analizando correo: "${subject}" ---`);
+                            console.log(`--- [LOG] Analizando correo: "${parsed.subject}" ---`);
 
-                            if (subject.includes('Abono') || subject.includes('Yape') || subject.includes('Confirmación') || subject.includes('recibiste')) {
+                            // Filtros más amplios e insensibles a mayúsculas
+                            const isYape = subject.includes('yape') || 
+                                           subject.includes('abono') || 
+                                           subject.includes('confirmaci') || 
+                                           subject.includes('recepci') ||
+                                           subject.includes('recibiste');
+
+                            if (isYape) {
+                                console.log('--- [LOG] Coincidencia encontrada en el correo ---');
                                 const amountMatch = text.match(/S\/\s?(\d+(?:\.\d+)?)/);
-                                const nameMatch = text.match(/Yape\s?\(([^)]+)\)/i) || text.match(/de\s+([A-Z\s]{5,})/i);
+                                const nameMatch = text.match(/Yape\s?\(([^)]+)\)/i) || 
+                                                 text.match(/de\s+([A-Z\s]{5,})/i) ||
+                                                 text.match(/Origen:\s?([^\n\r]+)/i);
 
                                 if (amountMatch) {
                                     const amount = amountMatch[1];
@@ -54,17 +66,29 @@ function startEmailListener(onNewNotification) {
                 });
             };
 
-            // 1. Procesar correos que ya estaban (por si uno llegó mientras reiniciaba)
+            // 1. Procesar correos existentes al conectar
             if (box.messages.total > 0) {
-                console.log('--- [LOG] Verificando últimos correos existentes ---');
-                processMessages(Math.min(box.messages.total, 3)); // Revisar los últimos 3
+                console.log('--- [LOG] Verificando últimos 5 correos en la bandeja ---');
+                processMessages(5);
             }
 
-            // 2. Escuchar nuevos correos en tiempo real
+            // 2. Escuchar nuevos correos
             imap.on('mail', (numNewMsgs) => {
-                console.log(`--- [LOG] ¡Nuevo correo detectado! (${numNewMsgs}) ---`);
+                console.log(`--- [LOG] ¡Nuevo correo detectado en tiempo real! ---`);
                 processMessages(numNewMsgs);
             });
+
+            // 3. Búsqueda de respaldo cada 2 minutos (por si falla el evento en tiempo real)
+            setInterval(() => {
+                console.log('--- [LOG] Búsqueda de respaldo periódica ---');
+                imap.openBox('INBOX', false, (err, newBox) => {
+                    if (!err && newBox.messages.total > box.messages.total) {
+                        const diff = newBox.messages.total - box.messages.total;
+                        box.messages.total = newBox.messages.total;
+                        processMessages(diff);
+                    }
+                });
+            }, 120000); // 2 minutos
         });
     });
 
