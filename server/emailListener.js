@@ -36,23 +36,32 @@ function startEmailListener(onNewNotification) {
 
                             // Filtrar correos de BCP / Yape
                             if (subject.includes('Abono') || subject.includes('Yape') || subject.includes('Confirmación')) {
-                                console.log('Posible notificación de Yape detectada en email');
+                                console.log('--- Posible notificación detectada ---');
+                                console.log('Asunto:', subject);
 
-                                // Regex para extraer monto y nombre (ejemplo basado en el formato BCP)
-                                // Monto Recibido: S/ 10.00
-                                const amountMatch = text.match(/S\/\s?(\d+\.\d{2})/);
-                                // Origen: Yape (JUAN PEREZ)
+                                // Regex más flexible para el monto: acepta S/ solo, con espacio, y 1 o más decimales
+                                // Ejemplo: S/ 0.1, S/ 10.00, S/5.5
+                                const amountMatch = text.match(/S\/\s?(\d+(?:\.\d+)?)/);
+                                
+                                // Regex para el nombre (Origen)
                                 const nameMatch = text.match(/Yape\s?\(([^)]+)\)/i) || text.match(/de\s+([A-Z\s]{5,})/i);
 
                                 if (amountMatch) {
+                                    const amount = amountMatch[1];
+                                    const sender = nameMatch ? nameMatch[1].trim() : 'Desconocido';
+                                    
+                                    console.log(`Detección exitosa: Monto S/ ${amount} de ${sender}`);
+
                                     const notification = {
                                         title: "Yape por Email",
-                                        text: `Recibiste S/ ${amountMatch[1]} de ${nameMatch ? nameMatch[1] : 'Alguien'}`,
-                                        amount: amountMatch[1],
-                                        sender: nameMatch ? nameMatch[1] : 'Desconocido',
+                                        text: `Recibiste S/ ${amount} de ${sender}`,
+                                        amount: amount,
+                                        sender: sender,
                                         source: 'email'
                                     };
                                     onNewNotification(notification);
+                                } else {
+                                    console.log('No se pudo extraer el monto del texto del correo.');
                                 }
                             }
                         });
