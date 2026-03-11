@@ -21,7 +21,7 @@ function startEmailListener(onNewNotification) {
         openInbox((err, box) => {
             if (err) throw err;
 
-            // Función para procesar correos específicos por su UID o secuencia
+            // Función para procesar correos específicos
             const fetchAndProcess = (criteria) => {
                 imap.search(criteria, (err, results) => {
                     if (err || !results || results.length === 0) return;
@@ -33,34 +33,48 @@ function startEmailListener(onNewNotification) {
                                 if (err) return console.error(err);
                                 const subject = (parsed.subject || '').toLowerCase();
                                 const text = parsed.text || '';
+                                const date = parsed.date || new Date();
                                 
+                                // Solo procesar si el correo es de hoy (doble verificación)
+                                const isToday = new Date(date).toDateString() === new Date().toDateString();
+                                if (!isToday) return;
+
                                 const isYape = subject.includes('yape') || 
                                                subject.includes('abono') || 
-                                               subject.includes('confirmaci') || 
                                                subject.includes('recepci');
 
                                 if (isYape) {
-                                    const amountMatch = text.match(/S\/\s?(\d+(?:\.\d+)?)/);
+                                    // Regex mejorado para monto (acepta S/ con o sin coma, y decimales)
+                                    const amountMatch = text.match(/S\/\s?(\d+(?:[,.]\d+)?)/);
+                                    
+                                    // Regex mejorado para nombre (evita frases comunes del BCP)
+                                    let sender = 'Desconocido';
                                     const nameMatch = text.match(/Yape\s?\(([^)]+)\)/i) || 
                                                      text.match(/de\s+([A-Z\s]{5,})/i);
+                                    
+                                    if (nameMatch) {
+                                        const potentialName = nameMatch[1].trim();
+                                        if (!potentialName.toLowerCase().includes('exitosamente') && 
+                                            !potentialName.toLowerCase().includes('celular')) {
+                                            sender = potentialName;
+                                        }
+                                    }
 
                                     if (amountMatch) {
-                                        const amount = amountMatch[1];
-                                        const sender = nameMatch ? nameMatch[1].trim() : 'Desconocido';
-                                        
+                                        let amountStr = amountMatch[1].replace(',', '.');
                                         onNewNotification({
                                             title: "Yape por Email",
-                                            text: `Recibiste S/ ${amount} de ${sender}`,
-                                            amount: amount,
+                                            text: `Recibiste S/ ${amountStr} de ${sender}`,
+                                            amount: amountStr,
                                             sender: sender,
                                             source: 'email'
                                         });
-                                        console.log(`--- [LOG] ¡EXITO! Procesado Yape de S/ ${amount} ---`);
+                                        console.log(`--- [LOG] ¡EXITO! Procesado Yape de S/ ${amountStr} ---`);
                                     }
                                 }
                             });
                         });
-                        // Marcar como leído para que no se repita
+                        // Marcar como leído
                         msg.once('attributes', (attrs) => {
                             imap.addFlags(attrs.uid, ['\\Seen'], () => {});
                         });
@@ -68,19 +82,19 @@ function startEmailListener(onNewNotification) {
                 });
             };
 
-            // 1. Al conectar, buscar SOLO los que no han sido leídos (UNSEEN)
-            console.log('--- [LOG] Buscando nuevos Yapes no leídos ---');
-            fetchAndProcess(['UNSEEN']);
+            // 1. Al conectar, buscar UNSEEN de hoy mismo
+            const today = new Date();
+            console.log('--- [LOG] Buscando Yapes nuevos de hoy ---');
+            fetchAndProcess(['UNSEEN', ['SINCE', today]]);
 
-            // 2. Escuchar nuevos correos
+            // 2. Escuchar nuevos
             imap.on('mail', () => {
-                console.log('--- [LOG] Nuevo correo detectado. Verificando... ---');
-                fetchAndProcess(['UNSEEN']);
+                fetchAndProcess(['UNSEEN', ['SINCE', new Date()]]);
             });
 
-            // 3. Respaldo periódico cada 5 minutos
+            // 3. Respaldo cada 5 min (solo hoy)
             setInterval(() => {
-                fetchAndProcess(['UNSEEN']);
+                fetchAndProcess(['UNSEEN', ['SINCE', new Date()]]);
             }, 300000);
         });
     });
