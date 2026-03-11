@@ -1,7 +1,7 @@
 {
   "name": "yape-monitor",
-  "version": "1.0.0",
-  "description": "Yape notification monitor",
+  "version": "1.0.1",
+  "description": "Yape notification monitor (Cloud optimized)",
   "main": "server/index.js",
   "scripts": {
     "start": "node server/index.js",
