@@ -176,11 +176,20 @@ function updateStats() {
 
     allNotifications.forEach(n => {
         if (getDateKey(n.timestamp) === selectedDateKey) {
-            let amount = 0;
-            const m = (n.text || "").match(/S\/ ?(\d+(\.\d+)?)/);
-            if (m) amount = parseFloat(m[1]);
-            dayTotal += amount;
-            dayCount++;
+            const text = (n.text || "").toLowerCase();
+            const title = (n.title || "").toLowerCase();
+            
+            // Solo contar si es un mensaje de recepción exitosa
+            const isRecibido = text.includes('recibiste') || title.includes('confirmación');
+            const isError = text.includes('insuficiente') || title.includes('insuficiente');
+
+            if (isRecibido && !isError) {
+                let amount = 0;
+                const m = (n.text || "").match(/S\/ ?(\d+(\.\d+)?)/);
+                if (m) amount = parseFloat(m[1]);
+                dayTotal += amount;
+                dayCount++;
+            }
         }
     });
 
