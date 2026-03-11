@@ -24,7 +24,9 @@ function startEmailListener(onNewNotification) {
             // Función para procesar correos específicos
             const fetchAndProcess = (criteria) => {
                 imap.search(criteria, (err, results) => {
-                    if (err || !results || results.length === 0) return;
+                    if (err || !results || results.length === 0) {
+                        return;
+                    }
                     
                     const f = imap.fetch(results, { bodies: '' });
                     f.on('message', (msg) => {
@@ -33,29 +35,28 @@ function startEmailListener(onNewNotification) {
                                 if (err) return console.error(err);
                                 const subject = (parsed.subject || '').toLowerCase();
                                 const text = parsed.text || '';
-                                const date = parsed.date || new Date();
                                 
-                                // Solo procesar si el correo es de hoy (doble verificación)
-                                const isToday = new Date(date).toDateString() === new Date().toDateString();
-                                if (!isToday) return;
+                                console.log(`--- [DEBUG] Correo UNSEEN hallado: "${parsed.subject}" ---`);
 
+                                // Filtro de Yape
                                 const isYape = subject.includes('yape') || 
                                                subject.includes('abono') || 
-                                               subject.includes('recepci');
+                                               subject.includes('recepci') ||
+                                               subject.includes('transferencia');
 
                                 if (isYape) {
-                                    // Regex mejorado para monto (acepta S/ con o sin coma, y decimales)
-                                    const amountMatch = text.match(/S\/\s?(\d+(?:[,.]\d+)?)/);
+                                    console.log(`--- [DEBUG] Analizando contenido de Yape... ---`);
+                                    // Regex para monto (S/ o S/.)
+                                    const amountMatch = text.match(/S\/\.?\s?(\d+(?:[,.]\d+)?)/i);
                                     
-                                    // Regex mejorado para nombre (evita frases comunes del BCP)
                                     let sender = 'Desconocido';
                                     const nameMatch = text.match(/Yape\s?\(([^)]+)\)/i) || 
-                                                     text.match(/de\s+([A-Z\s]{5,})/i);
+                                                     text.match(/de\s+([A-Z\s]{5,})/i) ||
+                                                     text.match(/Origen:\s?([^\n\r]+)/i);
                                     
                                     if (nameMatch) {
                                         const potentialName = nameMatch[1].trim();
-                                        if (!potentialName.toLowerCase().includes('exitosamente') && 
-                                            !potentialName.toLowerCase().includes('celular')) {
+                                        if (!potentialName.toLowerCase().includes('exitosamente')) {
                                             sender = potentialName;
                                         }
                                     }
@@ -69,7 +70,9 @@ function startEmailListener(onNewNotification) {
                                             sender: sender,
                                             source: 'email'
                                         });
-                                        console.log(`--- [LOG] ¡EXITO! Procesado Yape de S/ ${amountStr} ---`);
+                                        console.log(`--- [LOG] ¡EXITO! Procesado S/ ${amountStr} ---`);
+                                    } else {
+                                        console.log(`--- [DEBUG] No se halló monto en el texto: ${text.substring(0, 50)}... ---`);
                                     }
                                 }
                             });
@@ -82,19 +85,18 @@ function startEmailListener(onNewNotification) {
                 });
             };
 
-            // 1. Al conectar, buscar UNSEEN de hoy mismo
-            const today = new Date();
-            console.log('--- [LOG] Buscando Yapes nuevos de hoy ---');
-            fetchAndProcess(['UNSEEN', ['SINCE', today]]);
+            // 1. Al conectar, buscar TODOS los UNSEEN (sin importar la fecha)
+            console.log('--- [LOG] Sincronizando correos no leídos... ---');
+            fetchAndProcess(['UNSEEN']);
 
             // 2. Escuchar nuevos
             imap.on('mail', () => {
-                fetchAndProcess(['UNSEEN', ['SINCE', new Date()]]);
+                fetchAndProcess(['UNSEEN']);
             });
 
-            // 3. Respaldo cada 5 min (solo hoy)
+            // 3. Respaldo cada 5 min
             setInterval(() => {
-                fetchAndProcess(['UNSEEN', ['SINCE', new Date()]]);
+                fetchAndProcess(['UNSEEN']);
             }, 300000);
         });
     });
