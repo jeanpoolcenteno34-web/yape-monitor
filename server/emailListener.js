@@ -34,23 +34,20 @@ function startEmailListener(onNewNotification) {
                             const subject = parsed.subject || '';
                             const text = parsed.text || '';
 
-                            // Filtrar correos de BCP / Yape
-                            if (subject.includes('Abono') || subject.includes('Yape') || subject.includes('Confirmación')) {
-                                console.log('--- Posible notificación detectada ---');
-                                console.log('Asunto:', subject);
+                            console.log(`--- [LOG] Correo recibido: "${subject}" ---`);
 
-                                // Regex más flexible para el monto: acepta S/ solo, con espacio, y 1 o más decimales
-                                // Ejemplo: S/ 0.1, S/ 10.00, S/5.5
-                                const amountMatch = text.match(/S\/\s?(\d+(?:\.\d+)?)/);
+                            // Filtrar correos de BCP / Yape
+                            if (subject.includes('Abono') || subject.includes('Yape') || subject.includes('Confirmación') || subject.includes('recibiste')) {
+                                console.log('--- [LOG] Coincidencia de filtro detectada ---');
                                 
-                                // Regex para el nombre (Origen)
+                                const amountMatch = text.match(/S\/\s?(\d+(?:\.\d+)?)/);
                                 const nameMatch = text.match(/Yape\s?\(([^)]+)\)/i) || text.match(/de\s+([A-Z\s]{5,})/i);
 
                                 if (amountMatch) {
                                     const amount = amountMatch[1];
                                     const sender = nameMatch ? nameMatch[1].trim() : 'Desconocido';
                                     
-                                    console.log(`Detección exitosa: Monto S/ ${amount} de ${sender}`);
+                                    console.log(`--- [LOG] ¡EXITO! Detectado S/ ${amount} de ${sender}`);
 
                                     const notification = {
                                         title: "Yape por Email",
@@ -61,8 +58,11 @@ function startEmailListener(onNewNotification) {
                                     };
                                     onNewNotification(notification);
                                 } else {
-                                    console.log('No se pudo extraer el monto del texto del correo.');
+                                    console.log('--- [LOG] ERROR: No se pudo extraer el MONTO del texto.');
+                                    console.log('Texto analizado (primeros 100 caracteres):', text.substring(0, 100));
                                 }
+                            } else {
+                                console.log('--- [LOG] Correo ignorado: No coincide con los asuntos de Yape/BCP.');
                             }
                         });
                     });
