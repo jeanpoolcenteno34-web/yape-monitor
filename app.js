@@ -28,10 +28,10 @@ function getDateKey(dateStr) {
 // --- CORE LOGIC ---
 
 async function initSystem() {
-    // Clear cache if needed (V5 for date fix)
-    if (localStorage.getItem('clear_cache_v5') !== 'done') {
+    // Clear cache if needed (V6 for auto-select fix)
+    if (localStorage.getItem('clear_cache_v6') !== 'done') {
         localStorage.clear();
-        localStorage.setItem('clear_cache_v5', 'done');
+        localStorage.setItem('clear_cache_v6', 'done');
         window.location.reload(); 
         return;
     }
@@ -55,8 +55,7 @@ async function initSystem() {
 
         allNotifications = (data || []).filter(n => getDateKey(n.timestamp) >= sevenDaysKey);
         
-        const todayKey = new Date().toISOString().split('T')[0];
-        selectedDateKey = todayKey;
+        selectedDateKey = getDateKey(); // Usar la función que ya maneja hora local hoy
         
         renderApp();
 
