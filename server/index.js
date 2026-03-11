@@ -53,7 +53,13 @@ function handleNewNotification(data) {
     }
 
     // PUSH A SUPABASE (Nuestra base de datos real)
-    supabase.from('notificaciones').insert([newNotif]).then(({ error }) => {
+    // Solo enviamos 'title' y 'text' para que sea compatible con la tabla existente
+    supabase.from('notificaciones').insert([
+        { 
+            title: newNotif.title, 
+            text: newNotif.text 
+        }
+    ]).then(({ error }) => {
         if (error) console.error('Error enviando a Supabase:', error);
         else console.log('Sincronizado con Supabase');
     });
