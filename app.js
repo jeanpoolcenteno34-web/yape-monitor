@@ -18,18 +18,22 @@ function formatTime(dateStr) {
 }
 
 function getDateKey(dateStr) {
-    const d = new Date(dateStr);
-    return d.toISOString().split('T')[0];
+    const d = dateStr ? new Date(dateStr) : new Date();
+    const year = d.getFullYear();
+    const month = (d.getMonth() + 1).toString().padStart(2, '0');
+    const day = d.getDate().toString().padStart(2, '0');
+    return `${year}-${month}-${day}`;
 }
 
 // --- CORE LOGIC ---
 
 async function initSystem() {
-    // Clear cache if needed
-    if (localStorage.getItem('clear_cache_v4') !== 'done') {
+    // Clear cache if needed (V5 for date fix)
+    if (localStorage.getItem('clear_cache_v5') !== 'done') {
         localStorage.clear();
-        localStorage.setItem('clear_cache_v4', 'done');
-        window.location.reload(); // Force reload once
+        localStorage.setItem('clear_cache_v5', 'done');
+        window.location.reload(); 
+        return;
     }
 
     if (typeof window.supabase === 'undefined') return;
@@ -94,17 +98,24 @@ function renderDateSelector() {
     const selector = document.getElementById('date-selector');
     if (!selector) return;
 
-    // Generar exactamente los últimos 7 días
     const dates = [];
+    const now = new Date();
+    
     for (let i = 0; i < 7; i++) {
-        const d = new Date();
-        d.setDate(d.getDate() - i);
-        dates.push(d.toISOString().split('T')[0]);
+        const d = new Date(now);
+        d.setDate(now.getDate() - i);
+        const year = d.getFullYear();
+        const month = (d.getMonth() + 1).toString().padStart(2, '0');
+        const day = d.getDate().toString().padStart(2, '0');
+        dates.push(`${year}-${month}-${day}`);
     }
     
     selector.innerHTML = '';
     dates.forEach(dateStr => {
-        const d = new Date(dateStr + "T12:00:00");
+        // Parsear para mostrar nombre con hora local a mediodía para evitar errores de zona
+        const [y, m, dNum] = dateStr.split('-');
+        const d = new Date(y, m - 1, dNum, 12, 0, 0);
+        
         const dayName = d.toLocaleDateString('es-PE', { weekday: 'short' }).substring(0, 3).toUpperCase();
         const dayNum = d.getDate();
         
