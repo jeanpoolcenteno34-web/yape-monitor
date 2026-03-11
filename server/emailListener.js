@@ -21,52 +21,49 @@ function startEmailListener(onNewNotification) {
         openInbox((err, box) => {
             if (err) throw err;
 
-            // Escuchar nuevos correos
-            imap.on('mail', (numNewMsgs) => {
-                console.log(`Nuevo correo detectado (${numNewMsgs})`);
-                const f = imap.seq.fetch(`${box.messages.total}:*`, { bodies: '' });
-
+            // Función para procesar correos
+            const processMessages = (num) => {
+                const f = imap.seq.fetch(`${box.messages.total - (num - 1)}:*`, { bodies: '' });
                 f.on('message', (msg) => {
                     msg.on('body', (stream) => {
                         simpleParser(stream, async (err, parsed) => {
                             if (err) return console.error(err);
-
                             const subject = parsed.subject || '';
                             const text = parsed.text || '';
+                            console.log(`--- [LOG] Analizando correo: "${subject}" ---`);
 
-                            console.log(`--- [LOG] Correo recibido: "${subject}" ---`);
-
-                            // Filtrar correos de BCP / Yape
                             if (subject.includes('Abono') || subject.includes('Yape') || subject.includes('Confirmación') || subject.includes('recibiste')) {
-                                console.log('--- [LOG] Coincidencia de filtro detectada ---');
-                                
                                 const amountMatch = text.match(/S\/\s?(\d+(?:\.\d+)?)/);
                                 const nameMatch = text.match(/Yape\s?\(([^)]+)\)/i) || text.match(/de\s+([A-Z\s]{5,})/i);
 
                                 if (amountMatch) {
                                     const amount = amountMatch[1];
                                     const sender = nameMatch ? nameMatch[1].trim() : 'Desconocido';
-                                    
                                     console.log(`--- [LOG] ¡EXITO! Detectado S/ ${amount} de ${sender}`);
-
-                                    const notification = {
+                                    onNewNotification({
                                         title: "Yape por Email",
                                         text: `Recibiste S/ ${amount} de ${sender}`,
                                         amount: amount,
                                         sender: sender,
                                         source: 'email'
-                                    };
-                                    onNewNotification(notification);
-                                } else {
-                                    console.log('--- [LOG] ERROR: No se pudo extraer el MONTO del texto.');
-                                    console.log('Texto analizado (primeros 100 caracteres):', text.substring(0, 100));
+                                    });
                                 }
-                            } else {
-                                console.log('--- [LOG] Correo ignorado: No coincide con los asuntos de Yape/BCP.');
                             }
                         });
                     });
                 });
+            };
+
+            // 1. Procesar correos que ya estaban (por si uno llegó mientras reiniciaba)
+            if (box.messages.total > 0) {
+                console.log('--- [LOG] Verificando últimos correos existentes ---');
+                processMessages(Math.min(box.messages.total, 3)); // Revisar los últimos 3
+            }
+
+            // 2. Escuchar nuevos correos en tiempo real
+            imap.on('mail', (numNewMsgs) => {
+                console.log(`--- [LOG] ¡Nuevo correo detectado! (${numNewMsgs}) ---`);
+                processMessages(numNewMsgs);
             });
         });
     });
