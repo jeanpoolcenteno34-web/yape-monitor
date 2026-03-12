@@ -37,13 +37,53 @@ const io = new Server(server, {
     cors: { origin: "*", methods: ["GET", "POST"] }
 });
 
-// Función para procesar nuevas notificaciones
+// Función para procesar nuevas notificaciones con de-duplicación inteligente
 function handleNewNotification(data) {
+    const now = new Date();
+    const currentText = (data.text || '').toLowerCase();
+    
+    // Extraer monto para comparar
+    let currentAmount = data.amount;
+    if (!currentAmount) {
+        const m = currentText.match(/s\/\.?\s?(\d+(?:[,.]\d+)?)/i);
+        if (m) currentAmount = m[1].replace(',', '.');
+    }
+
+    // Revisar si ya recibimos algo parecido en los últimos 2 minutos
+    const isDuplicate = notificationsHistory.some(old => {
+        const oldTime = new Date(old.timestamp);
+        const diffSeconds = Math.abs(now - oldTime) / 1000;
+        if (diffSeconds > 120) return false;
+
+        const oldText = (old.text || '').toLowerCase();
+        if (oldText === currentText) return true;
+
+        let oldAmount = old.amount;
+        if (!oldAmount) {
+            const m = oldText.match(/s\/\.?\s?(\d+(?:[,.]\d+)?)/i);
+            if (m) oldAmount = m[1].replace(',', '.');
+        }
+
+        if (currentAmount && oldAmount && parseFloat(currentAmount) === parseFloat(oldAmount)) {
+            return true;
+        }
+        return false;
+    });
+
+    if (isDuplicate) {
+        console.log(`--- [DEDUPLICACIÓN] Ignorando aviso repetido ---`);
+        return;
+    }
+
     const newNotif = {
         ...data,
-        timestamp: new Date().toISOString()
+        timestamp: now.toISOString(),
+        amount: currentAmount // Guardamos el monto extraído
     };
     notificationsHistory.unshift(newNotif);
+
+    // Mantener solo los últimos 100 en memoria local
+    if (notificationsHistory.length > 100) notificationsHistory.pop();
 
     // Guardar solo en local si no estamos en la nube o si queremos persistencia volátil
     try {
@@ -53,7 +93,6 @@ function handleNewNotification(data) {
     }
 
     // PUSH A SUPABASE (Nuestra base de datos real)
-    // Solo enviamos 'title' y 'text' para que sea compatible con la tabla existente
     supabase.from('notificaciones').insert([
         { 
             title: newNotif.title, 

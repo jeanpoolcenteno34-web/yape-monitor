@@ -59,25 +59,74 @@ async function initSystem() {
         
         renderApp();
 
-        // Tiempo Real
+        // Tiempo Real (Supabase)
         db.channel('monitor').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notificaciones' }, payload => {
-            const newNotif = payload.new;
-            const nk = getDateKey(newNotif.timestamp);
-            
-            // Auto-borrar el mismo día de la semana pasada si existe en memoria
-            cleanOldData();
-            
-            allNotifications.unshift(newNotif);
-            
-            if (nk === selectedDateKey) renderNotifications();
-            renderDateSelector();
-            updateStats();
-            playNotificationSound();
+            handleIncomingNotification(payload.new, "Supabase");
         }).subscribe();
+
+        // --- SOCKET.IO (MODO AL TOQUE) ---
+        if (typeof io !== 'undefined') {
+            const socket = io();
+            socket.on('new-yape', (data) => {
+                handleIncomingNotification(data, "Socket");
+            });
+        }
 
     } catch (e) {
         console.error(e);
     }
+}
+
+// Función centralizada para procesar y evitar duplicados
+function handleIncomingNotification(data, source) {
+    const nk = getDateKey(data.timestamp);
+    const currentText = (data.text || '').toLowerCase();
+    
+    // Extraer monto para comparación inteligente si no viene explícito
+    let currentAmount = data.amount;
+    if (!currentAmount) {
+        const m = currentText.match(/s\/\.?\s?(\d+(?:[,.]\d+)?)/i);
+        if (m) currentAmount = m[1].replace(',', '.');
+    }
+
+    // Revisar duplicados en memoria (mismo monto y texto parecido en los últimos 2 min)
+    const isDuplicate = allNotifications.some(old => {
+        const diff = (new Date(data.timestamp) - new Date(old.timestamp)) / 1000;
+        if (Math.abs(diff) > 120) return false;
+
+        const oldText = (old.text || '').toLowerCase();
+        
+        // Match por texto exacto
+        if (oldText === currentText) return true;
+        
+        // Match por monto (si ambos tienen monto)
+        let oldAmount = old.amount;
+        if (!oldAmount) {
+            const m = oldText.match(/s\/\.?\s?(\d+(?:[,.]\d+)?)/i);
+            if (m) oldAmount = m[1].replace(',', '.');
+        }
+
+        if (currentAmount && oldAmount && parseFloat(currentAmount) === parseFloat(oldAmount)) {
+            // Si el monto es el mismo y pasó en el mismo minuto, es muy probable que sea el mismo
+            return true;
+        }
+
+        return false;
+    });
+
+    if (isDuplicate) {
+        console.log(`--- [DEDUPLICACIÓN] Bloqueado desde ${source} ---`);
+        return;
+    }
+
+    console.log(`--- [NUEVO] Recibido desde ${source} ---`);
+    allNotifications.unshift(data);
+    
+    if (nk === selectedDateKey) renderNotifications();
+    renderDateSelector();
+    updateStats();
+    playNotificationSound();
+    cleanOldData();
 }
 
 function cleanOldData() {
