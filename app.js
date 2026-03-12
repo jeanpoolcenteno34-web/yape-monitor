@@ -188,7 +188,10 @@ function renderNotifications() {
     const list = document.getElementById('notifications-list');
     if (!list) return;
 
-    const filtered = allNotifications.filter(n => getDateKey(n.timestamp) === selectedDateKey);
+    const filtered = allNotifications.filter(n => 
+        getDateKey(n.timestamp) === selectedDateKey && 
+        n.title !== 'Prueba Nube'
+    );
     
     list.innerHTML = '';
     if (filtered.length === 0) {

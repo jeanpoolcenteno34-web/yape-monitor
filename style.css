@@ -24,12 +24,86 @@ body {
     justify-content: center;
 }
 
-.glass-container {
+.app-layout {
+    display: flex;
+    flex-direction: row;
+    gap: 30px;
     width: 100%;
+    max-width: 900px;
+    align-items: flex-start;
+}
+
+.glass-container {
+    flex: 1;
+    min-width: 0;
     max-width: 480px;
     display: flex;
     flex-direction: column;
     gap: 25px;
+}
+
+/* QR Section */
+.qr-column {
+    display: flex;
+    flex-direction: column;
+    max-width: 350px;
+    flex-shrink: 0;
+}
+
+.qr-card {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: 28px;
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    text-align: center;
+}
+
+.qr-card h2 {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.qr-wrapper {
+    background: #ffffff;
+    padding: 15px;
+    border-radius: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.qr-wrapper img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 10px;
+    display: block;
+}
+
+.qr-card p {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+/* Responsiveness */
+@media (max-width: 800px) {
+    .app-layout {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .glass-container, .qr-column {
+        width: 100%;
+        max-width: 480px;
+    }
 }
 
 /* Header */

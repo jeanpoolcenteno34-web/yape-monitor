@@ -29,42 +29,54 @@
 
 <body>
 
-    <div class="glass-container">
-        <header class="nutri-header">
-            <div class="logo-group">
-                <div class="logo">YAPE<span>OS</span></div>
-            </div>
-            <div class="status-badge">
-                <span class="status-dot online"></span>
-                <span class="status-label">CONECTADO</span>
-            </div>
-        </header>
+    <div class="app-layout">
+        <div class="glass-container">
+            <header class="nutri-header">
+                <div class="logo-group">
+                    <div class="logo">YAPE<span>OS</span></div>
+                </div>
+                <div class="status-badge">
+                    <span class="status-dot online"></span>
+                    <span class="status-label">CONECTADO</span>
+                </div>
+            </header>
 
-        <!-- Selector de Días (Horizontal Scroll) -->
-        <div id="date-selector" class="date-selector">
-            <!-- Los días se cargarán aquí dinámicamente -->
+            <!-- Selector de Días (Horizontal Scroll) -->
+            <div id="date-selector" class="date-selector">
+                <!-- Los días se cargarán aquí dinámicamente -->
+            </div>
+
+            <div class="summary">
+                <div class="card total">
+                    <h3 id="total-label">Total Recibido</h3>
+                    <p id="t-amount">S/ 0.00</p>
+                </div>
+                <div class="card">
+                    <h3 id="count-label">Ventas Hoy</h3>
+                    <p id="t-count">0</p>
+                </div>
+            </div>
+
+            <div class="section-header">
+                <h2 id="view-title">YAPEOS DEL DÍA</h2>
+            </div>
+
+            <div id="notifications-list" class="notifications-list vertical">
+                <!-- Las notificaciones aparecerán aquí -->
+            </div>
+
+            <button id="btn-start" class="btn-start" onclick="initSystem()">RECONECTAR</button>
         </div>
 
-        <div class="summary">
-            <div class="card total">
-                <h3 id="total-label">Total Recibido</h3>
-                <p id="t-amount">S/ 0.00</p>
+        <div class="qr-column">
+            <div class="qr-card">
+                <h2>Paga con Yape</h2>
+                <div class="qr-wrapper">
+                    <img src="yape_qr.png" alt="QR de Yape" />
+                </div>
+                <p>Escanea el código para pagar</p>
             </div>
-            <div class="card">
-                <h3 id="count-label">Ventas Hoy</h3>
-                <p id="t-count">0</p>
-            </div>
         </div>
-
-        <div class="section-header">
-            <h2 id="view-title">YAPEOS DEL DÍA</h2>
-        </div>
-
-        <div id="notifications-list" class="notifications-list vertical">
-            <!-- Las notificaciones aparecerán aquí -->
-        </div>
-
-        <button id="btn-start" class="btn-start" onclick="initSystem()">RECONECTAR</button>
     </div>
 
     <!-- Audio para notificaciones (Sonido de Yape) -->
