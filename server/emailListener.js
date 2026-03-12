@@ -44,8 +44,10 @@ function startEmailListener(onNewNotification) {
                                        subject.includes('transferencia') ||
                                        subject.includes('pago') ||
                                        subject.includes('confirmaci') ||
+                                       subject.includes('prueba') ||
                                        text.includes('Yape') ||
-                                       text.includes('Abono');
+                                       text.includes('Abono') ||
+                                       text.includes('envió');
 
                         if (isYape) {
                             // Regex mejorada para montos S/ o S/. con decimales opcionales
@@ -123,12 +125,15 @@ function startEmailListener(onNewNotification) {
         setTimeout(() => startEmailListener(onNewNotification), 10000);
     });
 
-    // Heartbeat manual por si acaso
+    // Heartbeat cada 60s
     const heartbeat = setInterval(() => {
-        if (imap.state === 'authenticated') {
-            imap.noop();
-        }
+        if (imap.state === 'authenticated') imap.noop();
     }, 60000);
+
+    // Sincronización de seguridad cada 5 minutos (por si falla IDLE)
+    const backupSync = setInterval(() => {
+        if (imap.state === 'authenticated') fetchAndProcess(['UNSEEN']);
+    }, 300000);
 
     imap.connect();
 }
