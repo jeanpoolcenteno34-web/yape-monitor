@@ -37,18 +37,27 @@ function startEmailListener(onNewNotification) {
                         
                         console.log(`--- [LOG] Nuevo correo: "${parsed.subject}" ---`);
 
+                        // Filtro más flexible para BCP y Yape
                         const isYape = subject.includes('yape') || 
                                        subject.includes('abono') || 
                                        subject.includes('recepci') ||
                                        subject.includes('transferencia') ||
-                                       text.includes('Yape');
+                                       subject.includes('pago') ||
+                                       subject.includes('confirmaci') ||
+                                       text.includes('Yape') ||
+                                       text.includes('Abono');
 
                         if (isYape) {
-                            const amountMatch = text.match(/S\/\.?\s?(\d+(?:[,.]\d+)?)/i);
+                            // Regex mejorada para montos S/ o S/. con decimales opcionales
+                            const amountMatch = text.match(/S\/\.?\s?(\d+(?:[,.]\d+)?)/i) || 
+                                              text.match(/monto:\s?S\/\.?\s?(\d+(?:[,.]\d+)?)/i);
+                            
                             let sender = 'Desconocido';
+                            // Regex para capturar el nombre del remitente en diferentes formatos de BCP/Yape
                             const nameMatch = text.match(/Yape\s?\(([^)]+)\)/i) || 
                                              text.match(/de\s+([A-Z\s]{5,})/i) ||
-                                             text.match(/Origen:\s?([^\n\r]+)/i);
+                                             text.match(/Origen:\s?([^\n\r]+)/i) ||
+                                             text.match(/([A-Z][a-z]+ [A-Z][a-z]+)\s+te envió/i);
                             
                             if (nameMatch) {
                                 const potentialName = nameMatch[1].trim();
