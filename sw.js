@@ -1,10 +1,11 @@
-const CACHE_NAME = 'yapeos-v6';
+const CACHE_NAME = 'yapeos-v7';
 const ASSETS = [
     './index.html',
     './style.css',
     './app.js',
     './manifest.json',
-    './icon-512.png'
+    './icon-512.png',
+    './yape_qr.png'
 ];
 
 self.addEventListener('install', (event) => {
