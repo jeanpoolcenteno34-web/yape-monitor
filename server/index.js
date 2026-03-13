@@ -8,7 +8,15 @@ const { startEmailListener } = require('./emailListener');
 const { createClient } = require('@supabase/supabase-js');
 require('dotenv').config();
 
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
+const sUrl = process.env.SUPABASE_URL;
+const sKey = process.env.SUPABASE_KEY;
+
+if (!sUrl || !sKey) {
+    console.error('--- [ERROR] Faltan variables de Supabase (SUPABASE_URL o SUPABASE_KEY) ---');
+    console.warn('--- El servidor no se detendrá pero las funciones de DB fallarán ---');
+}
+
+const supabase = (sUrl && sKey) ? createClient(sUrl, sKey) : null;
 
 const app = express();
 app.use(cors());
