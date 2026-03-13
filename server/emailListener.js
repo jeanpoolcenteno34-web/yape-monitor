@@ -6,6 +6,8 @@ function startEmailListener(onNewNotification) {
     const rawPassword = process.env.EMAIL_PASSWORD || '';
     const cleanPassword = rawPassword.replace(/\s+/g, '');
     const passSummary = cleanPassword ? `${cleanPassword.length} chars, starts with ${cleanPassword[0]}...` : 'VACÍA';
+    const userEmail = process.env.EMAIL_USER || 'NO CONFIGURADO';
+    const maskedEmail = userEmail.replace(/(.{3})(.*)(@.*)/, '$1***$3');
     
     console.log(`--- [MONITOR] Intentando conectar con: ${maskedEmail} ---`);
     console.log(`--- [MONITOR] Password Ref: ${passSummary} ---`);
