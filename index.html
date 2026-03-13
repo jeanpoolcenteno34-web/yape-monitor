@@ -142,17 +142,27 @@
             </div>
 
             <div class="settings-group">
-                <label>Notificaciones</label>
+                <label>Avisos y Sonidos</label>
                 <div class="toggle-row">
-                    <span>Activar Alertas (Sonido y Push)</span>
+                    <span>Alertas con Sonido 🔊</span>
                     <label class="switch">
                         <input type="checkbox" id="notif-toggle" onchange="toggleNotifications()" checked>
                         <span class="slider round"></span>
                     </label>
                 </div>
                 <div class="toggle-row" style="margin-top:15px;">
-                    <span>Permisos PUSH (Nativos)</span>
-                    <button class="btn-action" onclick="requestPush()">Permitir 🔔</button>
+                    <span>Mensajes en mi pantalla 📱</span>
+                    <label class="switch">
+                        <input type="checkbox" id="push-toggle" onchange="toggleNotifications()" checked>
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+                <div class="toggle-row" style="margin-top:20px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 15px;">
+                    <div style="flex:1;">
+                        <span style="font-size:0.8rem; display:block;">Permisos del Navegador</span>
+                        <span id="push-status-label" style="font-size:0.75rem; color:var(--text-secondary);">Aún no permitido</span>
+                    </div>
+                    <button id="btn-request-push" class="btn-action" onclick="requestPush()" style="font-size:0.75rem;">Permitir ✅</button>
                 </div>
                 <div class="toggle-row" style="margin-top:15px; flex-direction:column; align-items:flex-start;">
                     <span>Sonido de Alerta</span>
@@ -177,6 +187,6 @@
     <audio id="yape-sound" src="https://www.myinstants.com/media/sounds/yape-notificacion.mp3" preload="auto"></audio>
 
     <!-- Scripts -->
-    <script src="app.js?v=20260312v18"></script>
+    <script src="app.js?v=20260312v19"></script>
 </body>
 </html>

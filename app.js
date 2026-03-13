@@ -18,12 +18,43 @@ function loadPreferences() {
     const notifToggle = document.getElementById('notif-toggle');
     if (notifToggle) notifToggle.checked = notifEnabled;
 
+    const pushEnabled = localStorage.getItem('yapeos_push_enabled') !== 'false';
+    const pushToggle = document.getElementById('push-toggle');
+    if (pushToggle) pushToggle.checked = pushEnabled;
+
     const savedSound = localStorage.getItem('yapeos_sound');
     if(savedSound) {
         const audio = document.getElementById('yape-sound');
         const select = document.getElementById('sound-select');
         if(audio) audio.src = savedSound;
         if(select) select.value = savedSound;
+    }
+    
+    updatePushUI();
+}
+
+function updatePushUI() {
+    const label = document.getElementById('push-status-label');
+    const btn = document.getElementById('btn-request-push');
+    if (!label || !btn) return;
+
+    if (!("Notification" in window)) {
+        label.innerText = "No soportado";
+        btn.style.display = "none";
+        return;
+    }
+
+    if (Notification.permission === "granted") {
+        label.innerText = "✅ YA PERMITIDO";
+        label.style.color = "var(--accent)";
+        btn.innerText = "Re-activar 🔔";
+    } else if (Notification.permission === "denied") {
+        label.innerText = "🚫 BLOQUEADO";
+        label.style.color = "#ff4d4d";
+        btn.innerText = "Cómo activar ℹ️";
+    } else {
+        label.innerText = "Aún no permitido";
+        btn.innerText = "Permitir 🔔";
     }
 }
 
@@ -44,10 +75,10 @@ function closeSettings() {
 }
 
 function toggleNotifications() {
-    const toggle = document.getElementById('notif-toggle');
-    if(toggle) {
-        localStorage.setItem('yapeos_notif_enabled', toggle.checked);
-    }
+    const nToggle = document.getElementById('notif-toggle');
+    const pToggle = document.getElementById('push-toggle');
+    if(nToggle) localStorage.setItem('yapeos_notif_enabled', nToggle.checked);
+    if(pToggle) localStorage.setItem('yapeos_push_enabled', pToggle.checked);
 }
 
 function changeSound() {
@@ -65,19 +96,24 @@ function changeSound() {
 
 async function requestPush() {
     if (!("Notification" in window)) {
-        alert("Tu navegador no soporta notificaciones de escritorio.");
+        alert("Tu navegador no soporta notificaciones.");
         return;
     }
+
+    if (Notification.permission === "denied") {
+        alert("Parece que has bloqueado las notificaciones. Para activarlas, haz clic en el 'candado' junto a la dirección web arriba y cambia 'Notificaciones' a 'Permitir'.");
+        return;
+    }
+
     const permission = await Notification.requestPermission();
     if (permission === "granted") {
-        alert("¡Notificaciones activadas!");
-    } else {
-        alert("Permiso denegado para notificaciones.");
+        alert("¡Permisos activados con éxito!");
     }
+    updatePushUI();
 }
 
 function triggerNativeNotification(title, body) {
-    const enabled = localStorage.getItem('yapeos_notif_enabled') !== 'false';
+    const enabled = localStorage.getItem('yapeos_push_enabled') !== 'false';
     if (!enabled) return;
 
     if (!("Notification" in window)) return;
@@ -562,6 +598,9 @@ function playNotificationSound(force = false) {
 
     const audio = document.getElementById('yape-sound');
     if (!audio) return;
+    
+    // Ensure volume is up
+    audio.volume = 1.0;
 
     // Reset and Load
     audio.pause();
@@ -594,9 +633,7 @@ function initAudioUnlocker() {
                 audio.pause();
                 audio.currentTime = 0;
                 console.log("Audio system unlocked");
-                document.removeEventListener('click', unlock);
-                document.removeEventListener('touchstart', unlock);
-            }).catch(e => console.log("Unlock failed", e));
+            }).catch(e => console.log("Unlock check", e));
         }
     };
     document.addEventListener('click', unlock);
