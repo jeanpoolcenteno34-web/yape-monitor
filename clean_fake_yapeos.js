@@ -31,7 +31,7 @@ async function cleanFakes() {
         
         // Exclude strictly fake amounts > 0 but < 0.10 (like 0.01)
         const isMicro = amount > 0 && amount < 0.10;
-        const isSurvey = textLow.includes('encuesta') || textLow.includes('participa por un');
+        const isSurvey = textLow.includes('encuesta') || textLow.includes('participa por un') || textLow.includes('prueba');
         const isFakeLink = textLow.includes('app.yape.com.pe') || textLow.includes('email_home_yape');
         const isYapero = textLow.includes('de yapero'); // Fake S/ 7 de yapero
         

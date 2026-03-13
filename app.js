@@ -493,7 +493,7 @@ function renderNotifications() {
         if (m) amount = parseFloat(m[1]);
         
         const isMicro = amount > 0 && amount < 0.10;
-        const isSurvey = textLow.includes('encuesta') || textLow.includes('participa por un');
+        const isSurvey = textLow.includes('encuesta') || textLow.includes('participa por un') || textLow.includes('prueba');
         const isFakeLink = textLow.includes('app.yape.com.pe') || textLow.includes('email_home_yape');
         const isYapero = textLow.includes('de yapero'); // Fake S/ 7 de yapero
         
@@ -531,29 +531,23 @@ function renderNotifications() {
         const timeStr = formatTime(n.timestamp);
         
         // Extract and style parts of the text (name, amount, security code)
-        // 1. Name styling (Yape names usually appear after "de ", inside "Yape (name)", or before "te envió")
         let formattedText = n.text || '';
-        formattedText = formattedText.replace(/(de\s+)([A-ZÑÁÉÍÓÚ\s]{5,})/gi, '$1<span style="color:var(--accent); font-weight:bold; font-size:1.05rem;">$2</span>');
-        formattedText = formattedText.replace(/(Yape\s?\()([^)]+)(\))/gi, '$1<span style="color:var(--accent); font-weight:bold; font-size:1.05rem;">$2</span>$3');
-        formattedText = formattedText.replace(/^([A-ZÑÁÉÍÓÚa-zñáéíóú\s*]+)(\s+te envió)/gi, '<span style="color:var(--accent); font-weight:bold; font-size:1.05rem;">$1</span>$2');
         
-        // 2. Amount styling
-        formattedText = formattedText.replace(/(S\/\.?\s?\d+(?:[,.]\d+)?)/gi, '<span style="color:#ffffff; font-weight:bold; font-size:1.15rem; background:rgba(255,255,255,0.1); padding:2px 6px; border-radius:6px; margin:0 2px;">$1</span>');
+        // 1. Amount styling (Must be done first to avoid breaking other tags if they overlap)
+        formattedText = formattedText.replace(/(S\/\.?\s*\d+(?:[,.]\d+)?)/gi, '<span style="color:#ffffff; font-weight:800; font-size:1.15rem; background:rgba(255,255,255,0.12); padding:2px 6px; border-radius:6px; margin:0 2px;">$1</span>');
         
-        // 3. Extract and style security code (3 to 6 digits)
-        const codeMatch = formattedText.match(/(?:c[oó]d\.?\s?de\s?seguridad es:?|c[oó]digo:|c[oó]digo|código)\s*(\d{3,6})/i) || formattedText.match(/\b\d{6}\b/) || formattedText.match(/(?:el c[oó]d\. de seguridad es:?)\s*(\d{3,6})/i);
-        let codeHtml = '';
-        if (codeMatch) {
-            const exactCode = codeMatch[1] || codeMatch[0];
-            codeHtml = `<div style="margin-top:8px; display:inline-block; background:rgba(0, 229, 255, 0.1); border: 1px solid #00e5ff; padding: 4px 10px; border-radius: 8px;">
-                            <span style="color:#00e5ff; font-family:monospace; font-size:1rem; font-weight:bold;">🔑 Cód: ${exactCode}</span>
-                        </div>`;
-            // Remove code from original text to prevent duplication
-            formattedText = formattedText.replace(new RegExp(`(?:el )?(?:c[oó]d\\.?\\s?de\\s?seguridad es:?|c[oó]digo:|c[oó]digo|código)\\s*${exactCode}`, 'i'), '');
-            formattedText = formattedText.replace(exactCode, '').trim();
-            // Clean up trailing dots or spaces
-            formattedText = formattedText.replace(/\.\s*$/, '');
-        }
+        // 2. Name styling (Yape names usually appear after "de ", inside "Yape (name)", or before "te envió")
+        formattedText = formattedText.replace(/(de\s+)([a-zA-ZÑÁÉÍÓÚáéíóú\s*]+)(?=$|<)/gi, '$1<span style="color:#00e5ff; font-weight:800; font-size:1.05rem;">$2</span>');
+        formattedText = formattedText.replace(/(Yape\s?\()([^)]+)(\))/gi, '$1<span style="color:#00e5ff; font-weight:800; font-size:1.05rem;">$2</span>$3');
+        formattedText = formattedText.replace(/^([a-zA-ZÑÁÉÍÓÚáéíóú\s*]+)(\s+te envi[oó])/gi, '<span style="color:#00e5ff; font-weight:800; font-size:1.05rem;">$1</span>$2');
+        
+        // 3. Extract and inline style security code (3 to 6 digits)
+        formattedText = formattedText.replace(/(el\s+)?(c[oó]d\.?\s?de\s?seguridad es:?|c[oó]digo:?)\s*(\d{3,6})/gi, 
+            '$1<span style="color:#00e5ff; font-weight:600;">$2</span> <span style="color:#ffffff; font-weight:800; font-family:monospace; font-size:1.1rem; background:rgba(255,255,255,0.1); padding:2px 6px; border-radius:4px; margin-left:2px;">$3</span>'
+        );
+        
+        // Fix trailing dots
+        formattedText = formattedText.replace(/\.\s*$/, '');
 
         const checkboxHTML = `<input type="checkbox" class="notif-checkbox" onchange="handleSelect(${n.id || `'${n.timestamp}'`})" ${isChecked ? 'checked' : ''}>`;
         

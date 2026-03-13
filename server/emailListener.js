@@ -54,7 +54,6 @@ function startEmailListener(onNewNotification) {
                                        subject.includes('transferencia') ||
                                        subject.includes('pago') ||
                                        subject.includes('confirmaci') ||
-                                       subject.includes('prueba') ||
                                        text.includes('Yape') ||
                                        text.includes('Abono') ||
                                        text.includes('envió');
@@ -84,7 +83,7 @@ function startEmailListener(onNewNotification) {
                                 
                                 const textLow = text.toLowerCase();
                                 const isMicro = numAmount > 0 && numAmount < 0.10;
-                                const isSurvey = textLow.includes('encuesta') || textLow.includes('participa por un');
+                                const isSurvey = textLow.includes('encuesta') || textLow.includes('participa por un') || textLow.includes('prueba');
                                 const isFakeLink = textLow.includes('app.yape.com.pe') || textLow.includes('email_home_yape');
                                 const isYapero = textLow.includes('de yapero'); // Fake S/ 7 de yapero
                                 
