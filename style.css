@@ -642,3 +642,84 @@ input:checked + .slider:before { transform: translateX(22px); }
     font-size: 1.1rem;
     color: var(--text-primary);
 }
+
+/* Print Styles */
+.print-only {
+    display: none;
+}
+
+@media print {
+    body {
+        background: white !important;
+        color: black !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    .app-layout {
+        display: block !important;
+        max-width: 100% !important;
+    }
+
+    /* Hide everything except print header and notifications */
+    .nutri-header, 
+    .store-tabs, 
+    .date-selector, 
+    .summary, 
+    .section-actions, 
+    .qr-column, 
+    .floating-banner, 
+    .btn-start, 
+    .modal-overlay,
+    .notif-checkbox {
+        display: none !important;
+    }
+
+    .glass-container {
+        padding: 0 !important;
+        background: transparent !important;
+        border: none !important;
+        max-width: 100% !important;
+    }
+
+    .print-only {
+        display: block !important;
+    }
+
+    .notifications-list {
+        max-height: none !important;
+        overflow: visible !important;
+        display: block !important;
+    }
+
+    .notification-item {
+        background: white !important;
+        border: none !important;
+        border-bottom: 1px solid #e2e8f0 !important;
+        border-radius: 0 !important;
+        padding: 10px 0 !important;
+        margin-bottom: 0 !important;
+        color: black !important;
+        animation: none !important;
+        opacity: 1 !important;
+        page-break-inside: avoid;
+    }
+
+    .notification-item p {
+        color: black !important;
+    }
+
+    .badge {
+        border: 1px solid #ccc !important;
+        color: black !important;
+    }
+    
+    .badge.large {
+        background: #f1f5f9 !important;
+        border: 1px solid #009374 !important;
+    }
+
+    .notif-time {
+        color: #475569 !important;
+    }
+}

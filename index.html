@@ -32,6 +32,25 @@
 
     <div class="app-layout">
         <div class="glass-container">
+            <!-- Header for PDF Export (Hidden in UI) -->
+            <div id="print-header" class="print-only">
+                <div style="text-align:center; margin-bottom: 20px;">
+                    <h1 style="color:#009374; font-size: 2.5rem; margin-bottom: 5px;">YAPEOS</h1>
+                    <p style="text-transform: uppercase; font-weight: 800; letter-spacing: 2px; color: #1e293b;">Reporte de Cierre Diario</p>
+                    <div id="print-date" style="margin-top: 10px; font-weight: 600;"></div>
+                </div>
+                <div class="print-summary" style="display:flex; justify-content: space-around; background: #f8fafc; padding: 20px; border-radius: 15px; border: 1px solid #e2e8f0; margin-bottom: 30px;">
+                    <div style="text-align:center;">
+                        <p style="font-size: 0.8rem; color: #64748b; text-transform: uppercase;">Total Recibido</p>
+                        <h2 id="print-total" style="font-size: 1.8rem; color: #1e293b;">S/ 0.00</h2>
+                    </div>
+                    <div style="text-align:center;">
+                        <p style="font-size: 0.8rem; color: #64748b; text-transform: uppercase;">Total Ventas</p>
+                        <h2 id="print-count" style="font-size: 1.8rem; color: #1e293b;">0</h2>
+                    </div>
+                </div>
+            </div>
+
             <header class="nutri-header">
                 <div class="logo-group">
                     <div class="logo">YAPE<span>OS</span></div>
@@ -148,6 +167,6 @@
     <audio id="yape-sound" src="https://www.myinstants.com/media/sounds/yape-notificacion.mp3" preload="auto"></audio>
 
     <!-- Scripts -->
-    <script src="app.js?v=20260312v13"></script>
+    <script src="app.js?v=20260312v14"></script>
 </body>
 </html>

@@ -317,6 +317,23 @@ async function unmarkFromTiendaBenito(id, shouldRefresh = true) {
 }
 
 function exportData() {
+    const isBenito = currentStoreTab === 'Benito';
+    const storeLabel = isBenito ? 'TIENDA BENITO' : 'TODOS LOS PAGOS';
+    
+    if(!confirm(`¿Deseas descargar el reporte de Cierre Diario (${storeLabel})?`)) return;
+
+    // Populate Print Header
+    const printDate = document.getElementById('print-date');
+    const printTotal = document.getElementById('print-total');
+    const printCount = document.getElementById('print-count');
+    
+    if(printDate) {
+        const d = new Date();
+        printDate.innerText = d.toLocaleDateString('es-PE', { day:'2-digit', month:'long', year:'numeric' }) + ' - ' + d.toLocaleTimeString('es-PE', { hour:'2-digit', minute:'2-digit' });
+    }
+    if(printTotal) printTotal.innerText = document.getElementById('t-amount').innerText;
+    if(printCount) printCount.innerText = document.getElementById('t-count').innerText;
+
     window.print();
 }
 
