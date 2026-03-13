@@ -4,6 +4,7 @@
     "description": "Yape Live: Notificaciones en tiempo real",
     "start_url": "./index.html",
     "display": "standalone",
+    "orientation": "portrait",
     "background_color": "#440b61",
     "theme_color": "#742284",
     "icons": [

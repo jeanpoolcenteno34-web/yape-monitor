@@ -65,13 +65,21 @@ function toggleTheme() {
     localStorage.setItem('yapeos_theme', isLight ? 'light' : 'dark');
 }
 
-function openSettings() {
+function showSettings() {
     document.getElementById('settings-modal').style.display = 'flex';
     loadPreferences();
 }
 
 function closeSettings() {
     document.getElementById('settings-modal').style.display = 'none';
+}
+
+function showInstallGuide() {
+    document.getElementById('install-modal').style.display = 'flex';
+}
+
+function closeInstallGuide() {
+    document.getElementById('install-modal').style.display = 'none';
 }
 
 function toggleNotifications() {
