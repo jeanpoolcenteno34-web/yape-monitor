@@ -564,7 +564,6 @@ function renderNotifications() {
             <div class="notif-body" style="flex:1;">
                 <p style="${titleStyle}">${n.title || 'Yape Recibido'}</p>
                 <p style="margin-top:4px; line-height:1.5;">${formattedText}</p>
-                ${codeHtml}
                 <div class="badge-row">
                     ${isLarge ? '<span class="badge large">🌟 Gran Venta</span>' : '<span class="badge" style="background:var(--accent); color:var(--bg-dark);">✅ Venta</span>'}
                 </div>
