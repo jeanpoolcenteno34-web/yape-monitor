@@ -57,11 +57,11 @@ function handleNewNotification(data) {
         if (m) currentAmount = m[1].replace(',', '.');
     }
 
-    // Revisar si ya recibimos algo parecido en los últimos 2 minutos
+    // Revisar si ya recibimos algo parecido en los últimos 10 minutos (600s)
     const isDuplicate = notificationsHistory.some(old => {
         const oldTime = new Date(old.timestamp);
         const diffSeconds = Math.abs(now - oldTime) / 1000;
-        if (diffSeconds > 120) return false;
+        if (diffSeconds > 600) return false;
 
         const oldText = (old.text || '').toLowerCase();
         if (oldText === currentText) return true;
@@ -72,8 +72,19 @@ function handleNewNotification(data) {
             if (m) oldAmount = m[1].replace(',', '.');
         }
 
+        // Si el monto es el mismo, revisamos el nombre
         if (currentAmount && oldAmount && parseFloat(currentAmount) === parseFloat(oldAmount)) {
-            return true;
+            // Extraer nombres para comparar (básico: quitar espacios y convertir a minúsculas)
+            const cleanName = (str) => (str || '').toLowerCase().replace(/[^a-z]/g, '');
+            const currentName = cleanName(data.sender || data.title || '');
+            const oldName = cleanName(old.sender || old.title || '');
+            
+            if (currentName && oldName && (currentName.includes(oldName) || oldName.includes(currentName))) {
+                return true;
+            }
+            
+            // Si no hay nombres claros, confiamos en el monto si la diferencia de tiempo es muy corta (< 3 min)
+            if (diffSeconds < 180) return true;
         }
         return false;
     });

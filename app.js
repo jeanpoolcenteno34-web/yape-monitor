@@ -280,10 +280,10 @@ function handleIncomingNotification(data, source) {
         if (m) currentAmount = m[1].replace(',', '.');
     }
 
-    // Revisar duplicados en memoria (mismo monto y texto parecido en los últimos 2 min)
+    // Revisar duplicados en memoria (mismo monto y texto parecido en los últimos 10 min)
     const isDuplicate = allNotifications.some(old => {
         const diff = (new Date(data.timestamp) - new Date(old.timestamp)) / 1000;
-        if (Math.abs(diff) > 120) return false;
+        if (Math.abs(diff) > 600) return false;
 
         const oldText = (old.text || '').toLowerCase();
         
@@ -298,8 +298,17 @@ function handleIncomingNotification(data, source) {
         }
 
         if (currentAmount && oldAmount && parseFloat(currentAmount) === parseFloat(oldAmount)) {
-            // Si el monto es el mismo y pasó en el mismo minuto, es muy probable que sea el mismo
-            return true;
+            // Comparación de nombres para evitar duplicados entre Email y App
+            const cleanName = (str) => (str || '').toLowerCase().replace(/[^a-z]/g, '');
+            const currentName = cleanName(data.sender || data.title || '');
+            const oldName = cleanName(old.sender || old.title || '');
+            
+            if (currentName && oldName && (currentName.includes(oldName) || oldName.includes(currentName))) {
+                return true;
+            }
+
+            // Si es muy reciente (< 3 min), confiamos en el monto
+            if (Math.abs(diff) < 180) return true;
         }
 
         return false;
