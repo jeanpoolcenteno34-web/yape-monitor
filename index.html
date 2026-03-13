@@ -157,19 +157,16 @@
                         <span class="slider round"></span>
                     </label>
                 </div>
-                <div class="toggle-row" style="margin-top:15px;">
-                    <span>Mensajes en mi pantalla 📱</span>
-                    <label class="switch">
-                        <input type="checkbox" id="push-toggle" onchange="toggleNotifications()" checked>
-                        <span class="slider round"></span>
-                    </label>
-                </div>
-                <div class="toggle-row" style="margin-top:20px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 15px;">
+                <div class="toggle-row" style="margin-top:15px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 15px;">
                     <div style="flex:1;">
-                        <span style="font-size:0.8rem; display:block;">Permisos de la Aplicación</span>
+                        <span style="font-size:0.9rem; display:block;">Permisos de la Aplicación 📱</span>
                         <span id="push-status-label" style="font-size:0.75rem; color:var(--text-secondary);">Aún no permitido</span>
                     </div>
-                    <button id="btn-request-push" class="btn-action" onclick="requestPush()" style="font-size:0.75rem;">Permitir ✅</button>
+                    <button id="btn-request-push" class="btn-action" style="font-size:0.75rem; display:none;">Cómo activar ℹ️</button>
+                    <label class="switch" id="push-auth-switch">
+                        <input type="checkbox" id="push-toggle" onchange="toggleAndRequestPush()">
+                        <span class="slider round"></span>
+                    </label>
                 </div>
                 <div class="toggle-row" style="margin-top:15px; flex-direction:column; align-items:flex-start;">
                     <span>Sonido de Alerta</span>
@@ -186,7 +183,7 @@
             
             <div class="settings-group">
                 <p style="font-size:0.8rem; color:var(--text-secondary); text-align:center; margin-bottom:5px;">Cambios se guardan automáticamente</p>
-                <p style="font-size:0.6rem; color:var(--accent); text-align:center; opacity:0.6;">Build Version: 32</p>
+                <p style="font-size:0.6rem; color:var(--accent); text-align:center; opacity:0.6;">Build Version: 33</p>
             </div>
         </div>
     </div>
@@ -217,6 +214,6 @@
     <audio id="yape-sound" src="https://www.myinstants.com/media/sounds/yape-notificacion.mp3" preload="auto"></audio>
 
     <!-- Scripts -->
-    <script src="app.js?v=32"></script>
+    <script src="app.js?v=33"></script>
 </body>
 </html>

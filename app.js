@@ -38,25 +38,40 @@ function loadPreferences() {
 function updatePushUI() {
     const label = document.getElementById('push-status-label');
     const btn = document.getElementById('btn-request-push');
-    if (!label || !btn) return;
+    const toggleLayer = document.getElementById('push-auth-switch');
+    const toggleInput = document.getElementById('push-toggle');
+    if (!label) return;
 
     if (!("Notification" in window)) {
-        label.innerText = "No soportado";
-        btn.style.display = "none";
+        label.innerText = "No soportado en este dispositivo";
+        if (btn) btn.style.display = "none";
+        if (toggleLayer) toggleLayer.style.display = "none";
         return;
     }
 
     if (Notification.permission === "granted") {
         label.innerText = "✅ YA PERMITIDO";
         label.style.color = "var(--accent)";
-        btn.innerText = "Re-activar 🔔";
+        if (btn) btn.style.display = "none";
+        if (toggleLayer) toggleLayer.style.display = "inline-block";
+        
+        const pushEnabled = localStorage.getItem('yapeos_push_enabled') !== 'false';
+        if (toggleInput) toggleInput.checked = pushEnabled;
+        
     } else if (Notification.permission === "denied") {
         label.innerText = "🚫 BLOQUEADO";
         label.style.color = "#ff4d4d";
-        btn.innerText = "Cómo activar ℹ️";
+        if (btn) {
+            btn.style.display = "inline-block";
+            btn.onclick = () => alert('⚠️ Para activar las notificaciones, haz clic en el ícono de Opciones (tres puntitos o candadito) junto a la dirección web y cambia "Notificaciones" a Permitir.');
+        }
+        if (toggleLayer) toggleLayer.style.display = "none";
     } else {
         label.innerText = "Aún no permitido";
-        btn.innerText = "Permitir 🔔";
+        label.style.color = "var(--text-secondary)";
+        if (btn) btn.style.display = "none";
+        if (toggleLayer) toggleLayer.style.display = "inline-block";
+        if (toggleInput) toggleInput.checked = false;
     }
 }
 
@@ -86,9 +101,7 @@ function closeInstallGuide() {
 
 function toggleNotifications() {
     const nToggle = document.getElementById('notif-toggle');
-    const pToggle = document.getElementById('push-toggle');
     if(nToggle) localStorage.setItem('yapeos_notif_enabled', nToggle.checked);
-    if(pToggle) localStorage.setItem('yapeos_push_enabled', pToggle.checked);
 }
 
 function changeSound() {
@@ -99,25 +112,28 @@ function changeSound() {
         audio.src = select.value;
         audio.load();
         localStorage.setItem('yapeos_sound', select.value);
-        // We don't auto-play on change anymore because it can be buggy on mobile
-        // The user now has a "Probar" button
     }
 }
 
-async function requestPush() {
-    if (!("Notification" in window)) {
-        alert("Tu navegador no soporta notificaciones.");
-        return;
-    }
+async function toggleAndRequestPush() {
+    const toggleInput = document.getElementById('push-toggle');
+    if (!toggleInput) return;
+    const isChecked = toggleInput.checked;
+    
+    if (!("Notification" in window)) return;
 
-    if (Notification.permission === "denied") {
-        alert("Parece que has bloqueado las notificaciones. Para activarlas, haz clic en el 'candado' junto a la dirección web arriba y cambia 'Notificaciones' a 'Permitir'.");
-        return;
-    }
-
-    const permission = await Notification.requestPermission();
-    if (permission === "granted") {
-        alert("¡Permisos activados con éxito!");
+    if (Notification.permission === "default" && isChecked) {
+        const permission = await Notification.requestPermission();
+        if (permission === "granted") {
+            // Optional: alert success
+            localStorage.setItem('yapeos_push_enabled', 'true');
+        } else {
+            toggleInput.checked = false;
+        }
+    } else if (Notification.permission === "granted") {
+        localStorage.setItem('yapeos_push_enabled', isChecked);
+    } else {
+        toggleInput.checked = false;
     }
     updatePushUI();
 }
