@@ -3,6 +3,12 @@ const Imap = require('imap');
 const { simpleParser } = require('mailparser');
 
 function startEmailListener(onNewNotification) {
+    const userEmail = process.env.EMAIL_USER || 'NO CONFIGURADO';
+    const maskedEmail = userEmail.replace(/(.{3})(.*)(@.*)/, '$1***$3');
+    
+    console.log(`--- [MONITOR] Intentando conectar con: ${maskedEmail} ---`);
+    console.log(`--- [MONITOR] Servidor IMAP: ${process.env.EMAIL_HOST || 'imap.gmail.com'} ---`);
+
     const imap = new Imap({
         user: process.env.EMAIL_USER,
         password: process.env.EMAIL_PASSWORD,
