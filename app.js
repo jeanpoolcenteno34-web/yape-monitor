@@ -626,7 +626,7 @@ function playNotificationSound(force = false) {
         }).catch(error => {
             console.error("Audio playback error:", error);
             if (force) {
-                alert("El sistema de sonido está bloqueado. Por favor, toca cualquier parte de la pantalla para activarlo o revisa el volumen de tu equipo.");
+                alert("El navegador bloqueó el sonido. Por favor, asegúrate de haber interactuado con la página o revisa el volumen de tu dispositivo.");
             }
         });
     }
@@ -634,34 +634,9 @@ function playNotificationSound(force = false) {
 
 // --- SYSTEM INITIALIZATION ---
 
-function activateApp() {
-    const audio = document.getElementById('yape-sound');
-    if (audio) {
-        audio.play().then(() => {
-            audio.pause();
-            audio.currentTime = 0;
-            console.log("App Activated & Audio Unlocked");
-            document.getElementById('activation-overlay').style.opacity = '0';
-            setTimeout(() => {
-                document.getElementById('activation-overlay').style.display = 'none';
-            }, 500);
-        }).catch(e => {
-            console.error("Activation failed", e);
-            document.getElementById('activation-overlay').style.display = 'none';
-        });
-    } else {
-        document.getElementById('activation-overlay').style.display = 'none';
-    }
-}
-
 // Init
 window.addEventListener('load', () => {
     loadPreferences();
     initAudioUnlocker();
-    
-    // Check if audio is already unlocked (rare) or show overlay
-    // For PWAs, we almost always show it on first load to be safe
-    document.getElementById('activation-overlay').style.display = 'flex';
-    
     setTimeout(initSystem, 300);
 });
