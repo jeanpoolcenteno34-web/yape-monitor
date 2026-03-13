@@ -16,9 +16,21 @@ function loadPreferences() {
     const themeToggle = document.getElementById('theme-toggle');
     if (themeToggle) themeToggle.checked = isLight;
 
+    const notifEnabled = localStorage.getItem('yapeos_notif_enabled') !== 'false';
+    const notifToggle = document.getElementById('notif-toggle');
+    if (notifToggle) notifToggle.checked = notifEnabled;
+
     const pushEnabled = localStorage.getItem('yapeos_push_enabled') !== 'false';
     const pushToggle = document.getElementById('push-toggle');
     if (pushToggle) pushToggle.checked = pushEnabled;
+
+    const savedSound = localStorage.getItem('yapeos_sound');
+    if(savedSound) {
+        const audio = document.getElementById('yape-sound');
+        const select = document.getElementById('sound-select');
+        if(audio) audio.src = savedSound;
+        if(select) select.value = savedSound;
+    }
     
     updatePushUI();
 }
@@ -30,18 +42,15 @@ function updatePushUI() {
     const toggleInput = document.getElementById('push-toggle');
     if (!label) return;
 
-    // Detect if running in Cordova (Native APK)
-    const isNative = window.cordova || window.location.protocol === 'file:';
-
-    if (!("Notification" in window) && !isNative) {
-        label.innerText = "No soportado en este navegador";
+    if (!("Notification" in window)) {
+        label.innerText = "No soportado en este dispositivo";
         if (btn) btn.style.display = "none";
         if (toggleLayer) toggleLayer.style.display = "none";
         return;
     }
 
-    if (Notification.permission === "granted" || isNative) {
-        label.innerText = "✅ ACTIVO (Integrado)";
+    if (Notification.permission === "granted") {
+        label.innerText = "✅ YA PERMITIDO";
         label.style.color = "var(--accent)";
         if (btn) btn.style.display = "none";
         if (toggleLayer) toggleLayer.style.display = "inline-block";
@@ -54,11 +63,11 @@ function updatePushUI() {
         label.style.color = "#ff4d4d";
         if (btn) {
             btn.style.display = "inline-block";
-            btn.onclick = () => alert('⚠️ Para activar las notificaciones, revisa los ajustes de la aplicación en tu Android.');
+            btn.onclick = () => alert('⚠️ Para activar las notificaciones, haz clic en el ícono de Opciones (tres puntitos o candadito) junto a la dirección web y cambia "Notificaciones" a Permitir.');
         }
         if (toggleLayer) toggleLayer.style.display = "none";
     } else {
-        label.innerText = "Pendiente de activar";
+        label.innerText = "Aún no permitido";
         label.style.color = "var(--text-secondary)";
         if (btn) btn.style.display = "none";
         if (toggleLayer) toggleLayer.style.display = "inline-block";
@@ -80,6 +89,30 @@ function showSettings() {
 
 function closeSettings() {
     document.getElementById('settings-modal').style.display = 'none';
+}
+
+function showInstallGuide() {
+    document.getElementById('install-modal').style.display = 'flex';
+}
+
+function closeInstallGuide() {
+    document.getElementById('install-modal').style.display = 'none';
+}
+
+function toggleNotifications() {
+    const nToggle = document.getElementById('notif-toggle');
+    if(nToggle) localStorage.setItem('yapeos_notif_enabled', nToggle.checked);
+}
+
+function changeSound() {
+    const select = document.getElementById('sound-select');
+    const audio = document.getElementById('yape-sound');
+    if(select && audio) {
+        audio.pause();
+        audio.src = select.value;
+        audio.load();
+        localStorage.setItem('yapeos_sound', select.value);
+    }
 }
 
 
@@ -217,6 +250,14 @@ async function initSystem() {
         // --- SOCKET.IO (MODO AL TOQUE) ---
         if (typeof io !== 'undefined') {
             const socket = io();
+            socket.on('connect', () => {
+                console.log("[SOCKET] Conectado - Recibiendo al toque");
+                document.getElementById('status-text').innerText = "CONECTADO";
+            });
+            socket.on('disconnect', () => {
+                console.warn("[SOCKET] Desconectado - Reconectando...");
+                document.getElementById('status-text').innerText = "RECONECTANDO...";
+            });
             socket.on('new-yape', (data) => {
                 handleIncomingNotification(data, "Socket");
             });
@@ -275,6 +316,7 @@ function handleIncomingNotification(data, source) {
     if (nk === selectedDateKey) renderNotifications();
     renderDateSelector();
     updateStats();
+    playNotificationSound();
     triggerNativeNotification(data.title || 'Yape Recibido', data.text || '');
     cleanOldData();
 }
@@ -650,11 +692,46 @@ function initAudioUnlocker() {
 }
 
 function playNotificationSound(force = false) {
-    // Sound alerts disabled per user request
-    return;
+    const enabled = localStorage.getItem('yapeos_notif_enabled') !== 'false';
+    if (!enabled && !force) return;
+
+    const audio = document.getElementById('yape-sound');
+    if (!audio) return;
+    
+    // Ensure volume is up
+    audio.volume = 1.0;
+
+    // Reset and Load
+    audio.pause();
+    if (!audio.src) {
+        const select = document.getElementById('sound-select');
+        if (select) audio.src = select.value;
+    }
+    
+    audio.currentTime = 0;
+    
+    const playPromise = audio.play();
+    if (playPromise !== undefined) {
+        playPromise.then(() => {
+            console.log("Audio started successfully");
+        }).catch(error => {
+            console.error("Audio playback error:", error);
+            if (force) {
+                alert("El navegador bloqueó el sonido. Por favor, asegúrate de haber interactuado con la página o revisa el volumen de tu dispositivo.");
+            }
+        });
+    }
 }
 
 // --- SYSTEM INITIALIZATION ---
+
+// Sync when coming back to app
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+        console.log("[SYNC] App visible, refrescando datos...");
+        initSystem();
+    }
+});
 
 // Init
 window.addEventListener('load', () => {
