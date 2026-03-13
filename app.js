@@ -528,6 +528,8 @@ function renderNotifications() {
         const isBenito = (n.text || '').toLowerCase().includes('[benito]');
         const isChecked = selectedIds.has(n.id);
         
+        const timeStr = formatTime(n.timestamp);
+        
         // Extract and style parts of the text (name, amount, security code)
         // 1. Name styling (Yape names usually appear after "de ", inside "Yape (name)", or before "te envió")
         let formattedText = n.text || '';
