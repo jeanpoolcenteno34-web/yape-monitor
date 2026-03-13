@@ -2,26 +2,57 @@ const S_URL = "https://qjekbbfskzyhjtuoepqj.supabase.co";
 const S_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqZWtiYmZza3p5aGp0dW9lcHFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyOTQ2NjUsImV4cCI6MjA4Nzg3MDY2NX0.1srkJCZJ4ny5G52o76YNPZ2hzbuhgVFVSENNHKlADWE";
 
 let db;
-let allNotifications = [];
-let selectedDateKey = "";
-
 // State variables for new features
 let currentStoreTab = 'All'; // 'All' or 'Benito'
 let searchText = '';
+let selectedIds = new Set(); 
 
 // Load theme preference early
 function loadTheme() {
-    if (localStorage.getItem('yapeos_theme') === 'light') {
-        document.body.classList.add('light-mode');
-    }
+    const isLight = localStorage.getItem('yapeos_theme') === 'light';
+    if (isLight) document.body.classList.add('light-mode');
+    
+    // Set toggle state if element exists
+    const toggle = document.getElementById('theme-toggle');
+    if (toggle) toggle.checked = isLight;
 }
 loadTheme();
+
+function loadSoundStr() {
+    const saved = localStorage.getItem('yapeos_sound');
+    if(saved) {
+        const audio = document.getElementById('yape-sound');
+        const select = document.getElementById('sound-select');
+        if(audio) audio.src = saved;
+        if(select) select.value = saved;
+    }
+}
 
 // --- THEME & PUSH NOTIFICATIONS ---
 
 function toggleTheme() {
     const isLight = document.body.classList.toggle('light-mode');
     localStorage.setItem('yapeos_theme', isLight ? 'light' : 'dark');
+}
+
+function openSettings() {
+    document.getElementById('settings-modal').style.display = 'flex';
+    loadTheme();
+    loadSoundStr();
+}
+
+function closeSettings() {
+    document.getElementById('settings-modal').style.display = 'none';
+}
+
+function changeSound() {
+    const select = document.getElementById('sound-select');
+    const audio = document.getElementById('yape-sound');
+    if(select && audio) {
+        audio.src = select.value;
+        localStorage.setItem('yapeos_sound', select.value);
+        audio.play().catch(()=>{}); // Preview
+    }
 }
 
 async function requestPush() {
@@ -197,22 +228,59 @@ function switchStore(storeName) {
     currentStoreTab = storeName;
     document.getElementById('tab-all').classList.toggle('active', storeName === 'All');
     document.getElementById('tab-benito').classList.toggle('active', storeName === 'Benito');
+    
+    // Clear selection when switching tabs
+    selectedIds.clear();
+    updateBanner();
+    
     renderNotifications();
     updateStats();
 }
 
-async function markAsTiendaBenito(id) {
-    if(!id) return;
-    try {
-        const { error } = await db.from('notificaciones').update({ is_tienda_benito: true }).eq('id', id);
-        if(!error) {
-            // Update local state instantly
-            const notif = allNotifications.find(n => n.id === id);
-            if(notif) notif.is_tienda_benito = true;
-            renderNotifications();
-            updateStats();
+function handleSelect(id) {
+    if (selectedIds.has(id)) {
+        selectedIds.delete(id);
+    } else {
+        selectedIds.add(id);
+    }
+    updateBanner();
+}
+
+function updateBanner() {
+    const banner = document.getElementById('multi-select-banner');
+    const countSpan = document.getElementById('select-count');
+    if(selectedIds.size > 0) {
+        banner.style.display = 'flex';
+        countSpan.innerText = `${selectedIds.size} yapeos seleccionados`;
+    } else {
+        banner.style.display = 'none';
+    }
+}
+
+async function markSelectedAsBenito() {
+    if(selectedIds.size === 0) return;
+    
+    // Process all selected
+    for(let id of selectedIds) {
+        const notif = allNotifications.find(n => n.id === id);
+        if(!notif) continue;
+        
+        // Append [BENITO] to the text field to save it without schema changes
+        if(!notif.text.includes('[BENITO]')) {
+            const newText = (notif.text || '') + ' [BENITO]';
+            try {
+                const { error } = await db.from('notificaciones').update({ text: newText }).eq('id', id);
+                if(!error) {
+                    notif.text = newText;
+                }
+            } catch(e) { console.error(e); }
         }
-    } catch(e) { console.error(e); }
+    }
+    
+    selectedIds.clear();
+    updateBanner();
+    renderNotifications();
+    updateStats();
 }
 
 function exportData() {
@@ -289,7 +357,8 @@ function renderNotifications() {
         if (textLow.includes('fallo') || textLow.includes('falló') || textLow.includes('rechazado') || textLow.includes('insuficiente')) return false;
         if (titleLow.includes('fallo') || titleLow.includes('falló') || titleLow.includes('rechazado') || titleLow.includes('insuficiente')) return false;
         
-        if (currentStoreTab === 'Benito' && !n.is_tienda_benito) return false;
+        const isBenito = textLow.includes('[benito]');
+        if (currentStoreTab === 'Benito' && !isBenito) return false;
         
         if (searchText) {
             if (!textLow.includes(searchText) && !titleLow.includes(searchText)) return false;
@@ -314,23 +383,29 @@ function renderNotifications() {
         if (m) amount = parseFloat(m[1]);
         
         const isLarge = amount >= 50;
+        const isBenito = (n.text || '').toLowerCase().includes('[benito]');
+        const isChecked = selectedIds.has(n.id);
         
-        const markBtnHTML = (!n.is_tienda_benito) 
-            ? `<button class="btn-mark-store" onclick="markAsTiendaBenito(${n.id || `'${n.timestamp}'`})">🏷️ Marcar Tienda Benito</button>`
-            : `<div style="width:100%; text-align:right; margin-top:5px;"><span class="badge">✅ Benito</span></div>`;
+        // Remove [BENITO] from display text to keep it clean
+        const displayText = (n.text || '').replace(' [BENITO]', '');
+
+        const actionsHTML = (!isBenito) 
+            ? `<input type="checkbox" class="notif-checkbox" onchange="handleSelect(${n.id || `'${n.timestamp}'`})" ${isChecked ? 'checked' : ''}>`
+            : `<div style="text-align:right; margin-top:5px;"><span class="badge">✅ Benito</span></div>`;
 
         item.innerHTML = `
-            <div class="notif-body">
+            ${(!isBenito) ? actionsHTML : ''}
+            <div class="notif-body" style="flex:1;">
                 <p>${n.title || 'Yape Recibido'}</p>
-                <p>${n.text || ''}</p>
+                <p>${displayText}</p>
                 <div class="badge-row">
                     ${isLarge ? '<span class="badge large">🌟 Gran Venta</span>' : '<span class="badge">Venta</span>'}
                 </div>
             </div>
-            <div class="notif-time" style="text-align:right;">
-                ${formatTime(n.timestamp)}
+            <div class="notif-time" style="text-align:right; display:flex; flex-direction:column; justify-content:space-between;">
+                <span>${formatTime(n.timestamp)}</span>
+                ${isBenito ? actionsHTML : ''}
             </div>
-            ${markBtnHTML}
         `;
         list.appendChild(item);
     });
@@ -351,7 +426,8 @@ function updateStats() {
 
     allNotifications.forEach(n => {
         if (getDateKey(n.timestamp) === selectedDateKey) {
-            if (currentStoreTab === 'Benito' && !n.is_tienda_benito) return;
+            const isBenito = (n.text || '').toLowerCase().includes('[benito]');
+            if (currentStoreTab === 'Benito' && !isBenito) return;
             
             const text = (n.text || "").toLowerCase();
             const title = (n.title || "").toLowerCase();
@@ -407,5 +483,6 @@ function playNotificationSound() {
 // Init
 window.addEventListener('load', () => {
     loadTheme();
+    loadSoundStr();
     setTimeout(initSystem, 300);
 });

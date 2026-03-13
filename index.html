@@ -37,8 +37,7 @@
                 </div>
                 <!-- App Controls -->
                 <div class="app-controls">
-                    <button id="btn-theme" class="icon-btn" title="Cambiar Tema" onclick="toggleTheme()">☀️</button>
-                    <button id="btn-notify" class="icon-btn" title="Notificaciones PUSH" onclick="requestPush()">🔔</button>
+                    <button id="btn-settings" class="icon-btn" title="Configuración" onclick="openSettings()">⚙️</button>
                     <div class="status-badge">
                         <span class="status-dot online"></span>
                         <span class="status-label" id="status-text">CONECTADO</span>
@@ -80,8 +79,13 @@
             </div>
 
             <button id="btn-start" class="btn-start" onclick="initSystem()">RECONECTAR</button>
+            <button id="btn-export" class="btn-start btn-export" onclick="exportData()" style="display:block;">📄 Cierre Diario (PDF)</button>
             
-            <button id="btn-export" class="btn-start btn-export" onclick="exportData()" style="display:block;">📄 Cierre de Caja (PDF)</button>
+            <!-- Floating Banner for Multi Selection -->
+            <div id="multi-select-banner" class="floating-banner" style="display:none;">
+                <span id="select-count">0 seleccionados</span>
+                <button onclick="markSelectedAsBenito()" class="btn-mark-store">🏷️ Marcar como Benito</button>
+            </div>
         </div>
 
         <div class="qr-column">
@@ -95,11 +99,51 @@
         </div>
     </div>
 
-    <!-- Audio para notificaciones (Sonido de Yape) -->
+    <!-- Modal de Configuración -->
+    <div id="settings-modal" class="modal-overlay" style="display:none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>⚙️ Configuración</h2>
+                <button class="icon-btn" onclick="closeSettings()">✕</button>
+            </div>
+            
+            <div class="settings-group">
+                <label>Tema de la Aplicación</label>
+                <div class="toggle-row">
+                    <span>Modo Claro / Oscuro</span>
+                    <label class="switch">
+                        <input type="checkbox" id="theme-toggle" onchange="toggleTheme()">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <label>Notificaciones</label>
+                <div class="toggle-row">
+                    <span>Activar Notificaciones PUSH (Nativas)</span>
+                    <button class="btn-action" onclick="requestPush()">Permitir 🔔</button>
+                </div>
+                <div class="toggle-row" style="margin-top:15px; flex-direction:column; align-items:flex-start;">
+                    <span>Sonido de Alerta</span>
+                    <select id="sound-select" onchange="changeSound()" class="search-bar" style="margin-top:10px;">
+                        <option value="https://www.myinstants.com/media/sounds/yape-notificacion.mp3">Clásico Yape</option>
+                        <option value="https://www.myinstants.com/media/sounds/ding-idea.mp3">Campanita (Tienda)</option>
+                        <option value="https://www.myinstants.com/media/sounds/coin-drop-4.mp3">Moneda cayendo</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="settings-group">
+                <p style="font-size:0.8rem; color:var(--text-secondary); text-align:center;">Cambios se guardan automáticamente</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audio para notificaciones -->
     <audio id="yape-sound" src="https://www.myinstants.com/media/sounds/yape-notificacion.mp3" preload="auto"></audio>
 
     <!-- Scripts -->
-    <script src="app.js?v=20260310v6"></script>
+    <script src="app.js?v=20260312v9"></script>
 </body>
-
 </html>
