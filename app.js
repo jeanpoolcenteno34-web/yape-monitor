@@ -54,11 +54,12 @@ function changeSound() {
     const select = document.getElementById('sound-select');
     const audio = document.getElementById('yape-sound');
     if(select && audio) {
+        audio.pause();
         audio.src = select.value;
+        audio.load();
         localStorage.setItem('yapeos_sound', select.value);
-        // Play preview
-        audio.currentTime = 0;
-        audio.play().catch(e => console.log("Auto-play blocked or error", e));
+        // We don't auto-play on change anymore because it can be buggy on mobile
+        // The user now has a "Probar" button
     }
 }
 
@@ -79,12 +80,15 @@ function triggerNativeNotification(title, body) {
     const enabled = localStorage.getItem('yapeos_notif_enabled') !== 'false';
     if (!enabled) return;
 
-    if (("Notification" in window) && Notification.permission === "granted") {
+    if (!("Notification" in window)) return;
+    
+    if (Notification.permission === "granted") {
         try {
             new Notification(title, {
                 body: body,
                 icon: './icon-512.png',
-                vibrate: [200, 100, 200]
+                vibrate: [200, 100, 200],
+                badge: './icon-512.png'
             });
         } catch(e) { console.error("Native push error", e); }
     }
@@ -552,12 +556,33 @@ function animateValue(obj, start, end, duration, isCurrency) {
     window.requestAnimationFrame(step);
 }
 
-function playNotificationSound() {
+function playNotificationSound(force = false) {
     const enabled = localStorage.getItem('yapeos_notif_enabled') !== 'false';
-    if (!enabled) return;
+    if (!enabled && !force) return;
 
     const audio = document.getElementById('yape-sound');
-    if (audio && audio.play) audio.play().catch(() => {});
+    if (!audio) return;
+
+    // Reset and Load
+    audio.pause();
+    if (!audio.src) {
+        const select = document.getElementById('sound-select');
+        if (select) audio.src = select.value;
+    }
+    
+    audio.currentTime = 0;
+    
+    const playPromise = audio.play();
+    if (playPromise !== undefined) {
+        playPromise.then(() => {
+            console.log("Audio started successfully");
+        }).catch(error => {
+            console.error("Audio playback error:", error);
+            if (force) {
+                alert("El navegador bloqueó el sonido. Por favor, asegúrate de haber interactuado con la página o revisa el volumen de tu dispositivo.");
+            }
+        });
+    }
 }
 
 // Init

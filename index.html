@@ -156,11 +156,14 @@
                 </div>
                 <div class="toggle-row" style="margin-top:15px; flex-direction:column; align-items:flex-start;">
                     <span>Sonido de Alerta</span>
-                    <select id="sound-select" onchange="changeSound()" class="search-bar" style="margin-top:10px;">
-                        <option value="https://www.myinstants.com/media/sounds/yape-notificacion.mp3">Clásico Yape</option>
-                        <option value="https://www.myinstants.com/media/sounds/ding-idea.mp3">Campanita (Tienda)</option>
-                        <option value="https://www.myinstants.com/media/sounds/coin-drop-4.mp3">Moneda cayendo</option>
-                    </select>
+                    <div style="display:flex; gap:10px; width:100%; margin-top:10px;">
+                        <select id="sound-select" onchange="changeSound()" class="search-bar">
+                            <option value="https://www.myinstants.com/media/sounds/yape-notificacion.mp3">Clásico Yape</option>
+                            <option value="https://www.myinstants.com/media/sounds/ding-idea.mp3">Campanita (Tienda)</option>
+                            <option value="https://www.myinstants.com/media/sounds/coin-drop-4.mp3">Moneda cayendo</option>
+                        </select>
+                        <button class="btn-action" onclick="playNotificationSound(true)" style="white-space:nowrap;">Probar 🔊</button>
+                    </div>
                 </div>
             </div>
             
@@ -174,6 +177,6 @@
     <audio id="yape-sound" src="https://www.myinstants.com/media/sounds/yape-notificacion.mp3" preload="auto"></audio>
 
     <!-- Scripts -->
-    <script src="app.js?v=20260312v16"></script>
+    <script src="app.js?v=20260312v17"></script>
 </body>
 </html>
