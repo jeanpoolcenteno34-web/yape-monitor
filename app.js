@@ -53,7 +53,19 @@ async function initSystem() {
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
         const sevenDaysKey = sevenDaysAgo.toISOString().split('T')[0];
 
-        allNotifications = (data || []).filter(n => getDateKey(n.timestamp) >= sevenDaysKey);
+        let loadedData = (data || []).filter(n => getDateKey(n.timestamp) >= sevenDaysKey);
+        
+        // --- Deduplicar historial inicial (por si en la BD hay duplicados) ---
+        allNotifications = [];
+        loadedData.forEach(notif => {
+            const currentText = (notif.text || '').toLowerCase();
+            const isDup = allNotifications.some(old => {
+                const diff = Math.abs(new Date(notif.timestamp) - new Date(old.timestamp)) / 1000;
+                if (diff > 120) return false;
+                return (old.text || '').toLowerCase() === currentText;
+            });
+            if (!isDup) allNotifications.push(notif);
+        });
         
         selectedDateKey = getDateKey(); // Usar la función que ya maneja hora local hoy
         
