@@ -35,11 +35,22 @@
                 <div class="logo-group">
                     <div class="logo">YAPE<span>OS</span></div>
                 </div>
-                <div class="status-badge">
-                    <span class="status-dot online"></span>
-                    <span class="status-label">CONECTADO</span>
+                <!-- App Controls -->
+                <div class="app-controls">
+                    <button id="btn-theme" class="icon-btn" title="Cambiar Tema" onclick="toggleTheme()">☀️</button>
+                    <button id="btn-notify" class="icon-btn" title="Notificaciones PUSH" onclick="requestPush()">🔔</button>
+                    <div class="status-badge">
+                        <span class="status-dot online"></span>
+                        <span class="status-label" id="status-text">CONECTADO</span>
+                    </div>
                 </div>
             </header>
+
+            <!-- Store Tabs (Carpeta) -->
+            <div class="store-tabs">
+                <button id="tab-all" class="store-tab active" onclick="switchStore('All')">Todos los Pagos</button>
+                <button id="tab-benito" class="store-tab" onclick="switchStore('Benito')">📁 Tienda Benito</button>
+            </div>
 
             <!-- Selector de Días (Horizontal Scroll) -->
             <div id="date-selector" class="date-selector">
@@ -57,8 +68,11 @@
                 </div>
             </div>
 
-            <div class="section-header">
-                <h2 id="view-title">YAPEOS DEL DÍA</h2>
+            <div class="section-actions">
+                <input type="text" id="search-bar" class="search-bar" placeholder="🔍 Buscar nombre o monto..." onkeyup="handleSearch()">
+                <div class="section-header">
+                    <h2 id="view-title">YAPEOS DEL DÍA</h2>
+                </div>
             </div>
 
             <div id="notifications-list" class="notifications-list vertical">
@@ -66,6 +80,8 @@
             </div>
 
             <button id="btn-start" class="btn-start" onclick="initSystem()">RECONECTAR</button>
+            
+            <button id="btn-export" class="btn-start btn-export" onclick="exportData()" style="display:block;">📄 Cierre de Caja (PDF)</button>
         </div>
 
         <div class="qr-column">

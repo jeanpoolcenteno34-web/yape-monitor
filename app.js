@@ -5,6 +5,50 @@ let db;
 let allNotifications = [];
 let selectedDateKey = "";
 
+// State variables for new features
+let currentStoreTab = 'All'; // 'All' or 'Benito'
+let searchText = '';
+
+// Load theme preference early
+function loadTheme() {
+    if (localStorage.getItem('yapeos_theme') === 'light') {
+        document.body.classList.add('light-mode');
+    }
+}
+loadTheme();
+
+// --- THEME & PUSH NOTIFICATIONS ---
+
+function toggleTheme() {
+    const isLight = document.body.classList.toggle('light-mode');
+    localStorage.setItem('yapeos_theme', isLight ? 'light' : 'dark');
+}
+
+async function requestPush() {
+    if (!("Notification" in window)) {
+        alert("Tu navegador no soporta notificaciones de escritorio.");
+        return;
+    }
+    const permission = await Notification.requestPermission();
+    if (permission === "granted") {
+        alert("¡Notificaciones activadas!");
+    } else {
+        alert("Permiso denegado para notificaciones.");
+    }
+}
+
+function triggerNativeNotification(title, body) {
+    if (("Notification" in window) && Notification.permission === "granted") {
+        try {
+            new Notification(title, {
+                body: body,
+                icon: './icon-512.png',
+                vibrate: [200, 100, 200]
+            });
+        } catch(e) { console.error("Native push error", e); }
+    }
+}
+
 // --- UTILS ---
 
 function formatTime(dateStr) {
@@ -138,7 +182,41 @@ function handleIncomingNotification(data, source) {
     renderDateSelector();
     updateStats();
     playNotificationSound();
+    triggerNativeNotification(data.title || 'Yape Recibido', data.text || '');
     cleanOldData();
+}
+
+// --- NEW UI ACTIONS ---
+
+function handleSearch() {
+    searchText = document.getElementById('search-bar').value.toLowerCase();
+    renderNotifications();
+}
+
+function switchStore(storeName) {
+    currentStoreTab = storeName;
+    document.getElementById('tab-all').classList.toggle('active', storeName === 'All');
+    document.getElementById('tab-benito').classList.toggle('active', storeName === 'Benito');
+    renderNotifications();
+    updateStats();
+}
+
+async function markAsTiendaBenito(id) {
+    if(!id) return;
+    try {
+        const { error } = await db.from('notificaciones').update({ is_tienda_benito: true }).eq('id', id);
+        if(!error) {
+            // Update local state instantly
+            const notif = allNotifications.find(n => n.id === id);
+            if(notif) notif.is_tienda_benito = true;
+            renderNotifications();
+            updateStats();
+        }
+    } catch(e) { console.error(e); }
+}
+
+function exportData() {
+    window.print();
 }
 
 function cleanOldData() {
@@ -200,26 +278,59 @@ function renderNotifications() {
     const list = document.getElementById('notifications-list');
     if (!list) return;
 
-    const filtered = allNotifications.filter(n => 
-        getDateKey(n.timestamp) === selectedDateKey && 
-        n.title !== 'Prueba Nube'
-    );
+    // Filter by Date, Prueba Nube, Search Text, and Active Store Tab
+    const filtered = allNotifications.filter(n => {
+        if (getDateKey(n.timestamp) !== selectedDateKey) return false;
+        if (n.title === 'Prueba Nube') return false;
+        
+        // Strict Error Filtering
+        const textLow = (n.text || '').toLowerCase();
+        const titleLow = (n.title || '').toLowerCase();
+        if (textLow.includes('fallo') || textLow.includes('falló') || textLow.includes('rechazado') || textLow.includes('insuficiente')) return false;
+        if (titleLow.includes('fallo') || titleLow.includes('falló') || titleLow.includes('rechazado') || titleLow.includes('insuficiente')) return false;
+        
+        if (currentStoreTab === 'Benito' && !n.is_tienda_benito) return false;
+        
+        if (searchText) {
+            if (!textLow.includes(searchText) && !titleLow.includes(searchText)) return false;
+        }
+        
+        return true;
+    });
     
     list.innerHTML = '';
     if (filtered.length === 0) {
-        list.innerHTML = '<p style="text-align:center; opacity:0.3; padding:40px 0;">No hay yapeos registrados</p>';
+        list.innerHTML = '<p style="text-align:center; opacity:0.3; padding:40px 0;">No hay yapeos que mostrar</p>';
         return;
     }
 
     filtered.forEach(n => {
         const item = document.createElement('div');
         item.className = "notification-item";
+        
+        // Check amount for "Gran Venta" badge
+        let amount = 0;
+        const m = (n.text || "").match(/S\/ ?(\d+(\.\d+)?)/i);
+        if (m) amount = parseFloat(m[1]);
+        
+        const isLarge = amount >= 50;
+        
+        const markBtnHTML = (!n.is_tienda_benito) 
+            ? `<button class="btn-mark-store" onclick="markAsTiendaBenito(${n.id || `'${n.timestamp}'`})">🏷️ Marcar Tienda Benito</button>`
+            : `<div style="width:100%; text-align:right; margin-top:5px;"><span class="badge">✅ Benito</span></div>`;
+
         item.innerHTML = `
             <div class="notif-body">
                 <p>${n.title || 'Yape Recibido'}</p>
                 <p>${n.text || ''}</p>
+                <div class="badge-row">
+                    ${isLarge ? '<span class="badge large">🌟 Gran Venta</span>' : '<span class="badge">Venta</span>'}
+                </div>
             </div>
-            <div class="notif-time">${formatTime(n.timestamp)}</div>
+            <div class="notif-time" style="text-align:right;">
+                ${formatTime(n.timestamp)}
+            </div>
+            ${markBtnHTML}
         `;
         list.appendChild(item);
     });
@@ -240,16 +351,18 @@ function updateStats() {
 
     allNotifications.forEach(n => {
         if (getDateKey(n.timestamp) === selectedDateKey) {
+            if (currentStoreTab === 'Benito' && !n.is_tienda_benito) return;
+            
             const text = (n.text || "").toLowerCase();
             const title = (n.title || "").toLowerCase();
             
-            // Solo contar si es un mensaje de recepción exitosa
-            const isRecibido = text.includes('recibiste') || title.includes('confirmación');
-            const isError = text.includes('insuficiente') || title.includes('insuficiente');
+            // Strict check
+            const isRecibido = text.includes('recibiste') || title.includes('confirmación') || text.includes('yapeaste');
+            const isError = text.includes('fallo') || text.includes('falló') || text.includes('rechazado') || text.includes('insuficiente') || title.includes('fallo') || title.includes('falló') || title.includes('rechazado');
 
             if (isRecibido && !isError) {
                 let amount = 0;
-                const m = (n.text || "").match(/S\/ ?(\d+(\.\d+)?)/);
+                const m = (n.text || "").match(/S\/ ?(\d+(\.\d+)?)/i);
                 if (m) amount = parseFloat(m[1]);
                 dayTotal += amount;
                 dayCount++;
@@ -257,8 +370,33 @@ function updateStats() {
         }
     });
 
-    if (tAmount) tAmount.innerText = `S/ ${dayTotal.toFixed(2)}`;
-    if (tCount) tCount.innerText = dayCount;
+    animateValue(tAmount, parseFloat(tAmount.innerText.replace('S/ ', '')) || 0, dayTotal, 500, true);
+    animateValue(tCount, parseInt(tCount.innerText) || 0, dayCount, 500, false);
+}
+
+// Function to animate numbers counting up
+function animateValue(obj, start, end, duration, isCurrency) {
+    if (!obj) return;
+    let startTimestamp = null;
+    const step = (timestamp) => {
+        if (!startTimestamp) startTimestamp = timestamp;
+        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+        const current = progress * (end - start) + start;
+        
+        if (isCurrency) {
+            obj.innerText = `S/ ${current.toFixed(2)}`;
+        } else {
+            obj.innerText = Math.floor(current);
+        }
+        
+        if (progress < 1) {
+            window.requestAnimationFrame(step);
+        } else {
+            if (isCurrency) obj.innerText = `S/ ${end.toFixed(2)}`;
+            else obj.innerText = end;
+        }
+    };
+    window.requestAnimationFrame(step);
 }
 
 function playNotificationSound() {
@@ -268,5 +406,6 @@ function playNotificationSound() {
 
 // Init
 window.addEventListener('load', () => {
+    loadTheme();
     setTimeout(initSystem, 300);
 });
