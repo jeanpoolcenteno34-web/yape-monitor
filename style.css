@@ -121,6 +121,22 @@ body {
 }
 
 /* Header */
+.modal-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.close-modal {
+    margin-right: auto; /* Push title if needed, but we have gap */
+}
+
+body.light-mode .modal-header {
+    border-bottom-color: rgba(0, 0, 0, 0.05);
+}
 .nutri-header {
     display: flex;
     justify-content: space-between;
@@ -512,13 +528,36 @@ select.search-bar option {
 
 .modal-content {
     background: var(--bg-card);
-    border: 3px solid var(--accent);
-    border-radius: 28px;
-    width: 90%;
-    max-width: 420px;
     padding: 30px;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
-    animation: slideUpFade 0.3s ease-out;
+    border-radius: 24px;
+    width: 90%;
+    max-width: 500px;
+    position: relative; /* For absolute close button */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    animation: modalPop 0.3s ease-out;
+}
+
+body.light-mode .modal-content {
+    background: white;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: center; /* Center title */
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.close-modal {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 10;
 }
 
 .settings-group {
@@ -650,10 +689,12 @@ input:checked + .slider:before { transform: translateX(22px); }
 
 @media print {
     body {
-        background: white !important;
-        color: black !important;
+        background: #f8fafc !important;
+        color: #1e293b !important;
         padding: 0 !important;
         margin: 0 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
     }
 
     .app-layout {
@@ -676,7 +717,7 @@ input:checked + .slider:before { transform: translateX(22px); }
     }
 
     .glass-container {
-        padding: 0 !important;
+        padding: 40px !important;
         background: transparent !important;
         border: none !important;
         max-width: 100% !important;
@@ -690,36 +731,43 @@ input:checked + .slider:before { transform: translateX(22px); }
         max-height: none !important;
         overflow: visible !important;
         display: block !important;
+        padding: 0 !important;
     }
 
     .notification-item {
         background: white !important;
-        border: none !important;
-        border-bottom: 1px solid #e2e8f0 !important;
-        border-radius: 0 !important;
-        padding: 10px 0 !important;
-        margin-bottom: 0 !important;
-        color: black !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 12px !important;
+        padding: 15px !important;
+        margin-bottom: 10px !important;
+        color: #1e293b !important;
         animation: none !important;
         opacity: 1 !important;
         page-break-inside: avoid;
+        display: flex !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02) !important;
     }
 
     .notification-item p {
-        color: black !important;
+        color: #1e293b !important;
+        margin: 2px 0 !important;
     }
 
     .badge {
-        border: 1px solid #ccc !important;
-        color: black !important;
+        background: #f1f5f9 !important;
+        border: 1px solid #e2e8f0 !important;
+        color: #475569 !important;
+        font-weight: 700 !important;
     }
     
     .badge.large {
-        background: #f1f5f9 !important;
-        border: 1px solid #009374 !important;
+        background: #ecfdf5 !important;
+        border: 1px solid #10b981 !important;
+        color: #047857 !important;
     }
 
     .notif-time {
-        color: #475569 !important;
+        color: #64748b !important;
+        font-size: 0.8rem !important;
     }
 }
