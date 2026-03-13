@@ -6,6 +6,8 @@ let db;
 let currentStoreTab = 'All'; // 'All' or 'Benito'
 let searchText = '';
 let selectedIds = new Set(); 
+let allNotifications = [];
+let selectedDateKey = '';
 
 // Load theme preference early
 function loadPreferences() {
@@ -169,7 +171,18 @@ async function initSystem() {
         return;
     }
 
-    if (typeof window.supabase === 'undefined') return;
+    console.log("--- [SISTEMA] Iniciando Monitor ---");
+    
+    // Fallback: al menos renderizar lo que tenemos (días vacíos/historial previo si hubiera)
+    selectedDateKey = getDateKey();
+    console.log("[SISTEMA] Render inicial con fecha:", selectedDateKey);
+    renderApp();
+
+    if (typeof window.supabase === 'undefined') {
+        console.error("CRÍTICO: Supabase v2 no está cargado en el navegador.");
+        document.getElementById('status-text').innerText = "ERROR CARGA";
+        return;
+    }
 
     try {
         db = window.supabase.createClient(S_URL, S_KEY);
@@ -179,7 +192,12 @@ async function initSystem() {
             .order('timestamp', { ascending: false })
             .limit(500);
 
-        if (error) return;
+        if (error) {
+            console.error("Error Supabase:", error);
+            return;
+        }
+
+        console.log(`--- [DATOS] ${data?.length || 0} registros recibidos ---`);
 
         // Limpiar datos mayores a 7 días (rolling window)
         const sevenDaysAgo = new Date();
@@ -188,20 +206,22 @@ async function initSystem() {
 
         let loadedData = (data || []).filter(n => getDateKey(n.timestamp) >= sevenDaysKey);
         
-        // --- Deduplicar historial inicial (por si en la BD hay duplicados) ---
-        allNotifications = [];
+        // --- Deduplicar historial inicial ---
+        let finalHistory = [];
         loadedData.forEach(notif => {
             const currentText = (notif.text || '').toLowerCase();
-            const isDup = allNotifications.some(old => {
+            const isDup = finalHistory.some(old => {
                 const diff = Math.abs(new Date(notif.timestamp) - new Date(old.timestamp)) / 1000;
                 if (diff > 120) return false;
                 return (old.text || '').toLowerCase() === currentText;
             });
-            if (!isDup) allNotifications.push(notif);
+            if (!isDup) finalHistory.push(notif);
         });
         
-        selectedDateKey = getDateKey(); // Usar la función que ya maneja hora local hoy
+        // --- Deduplicar historial inicial (por si en la BD hay duplicados) ---
+        allNotifications = finalHistory;
         
+        // Renderizar con datos frescos
         renderApp();
 
         // Tiempo Real (Supabase)
@@ -598,6 +618,25 @@ function animateValue(obj, start, end, duration, isCurrency) {
         }
     };
     window.requestAnimationFrame(step);
+}
+
+// --- AUDIO UNLOCKER FOR MOBILE ---
+function initAudioUnlocker() {
+    console.log("[AUDIO] Iniciando desbloqueador de audio...");
+    const unlock = () => {
+        const audio = document.getElementById('yape-sound');
+        if (audio) {
+            audio.play().then(() => {
+                audio.pause();
+                audio.currentTime = 0;
+                console.log("[AUDIO] Desbloqueado con éxito");
+            }).catch(e => console.log("[AUDIO] Esperando interacción..."));
+        }
+        document.removeEventListener('click', unlock);
+        document.removeEventListener('touchstart', unlock);
+    };
+    document.addEventListener('click', unlock);
+    document.addEventListener('touchstart', unlock);
 }
 
 function playNotificationSound(force = false) {

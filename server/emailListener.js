@@ -3,15 +3,17 @@ const Imap = require('imap');
 const { simpleParser } = require('mailparser');
 
 function startEmailListener(onNewNotification) {
-    const userEmail = process.env.EMAIL_USER || 'NO CONFIGURADO';
-    const maskedEmail = userEmail.replace(/(.{3})(.*)(@.*)/, '$1***$3');
+    const rawPassword = process.env.EMAIL_PASSWORD || '';
+    const cleanPassword = rawPassword.replace(/\s+/g, '');
+    const passSummary = cleanPassword ? `${cleanPassword.length} chars, starts with ${cleanPassword[0]}...` : 'VACÍA';
     
     console.log(`--- [MONITOR] Intentando conectar con: ${maskedEmail} ---`);
+    console.log(`--- [MONITOR] Password Ref: ${passSummary} ---`);
     console.log(`--- [MONITOR] Servidor IMAP: ${process.env.EMAIL_HOST || 'imap.gmail.com'} ---`);
 
     const imap = new Imap({
         user: process.env.EMAIL_USER,
-        password: process.env.EMAIL_PASSWORD,
+        password: cleanPassword,
         host: process.env.EMAIL_HOST || 'imap.gmail.com',
         port: 993,
         tls: true,
