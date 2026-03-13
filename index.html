@@ -144,7 +144,14 @@
             <div class="settings-group">
                 <label>Notificaciones</label>
                 <div class="toggle-row">
-                    <span>Activar Notificaciones PUSH (Nativas)</span>
+                    <span>Activar Alertas (Sonido y Push)</span>
+                    <label class="switch">
+                        <input type="checkbox" id="notif-toggle" onchange="toggleNotifications()" checked>
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+                <div class="toggle-row" style="margin-top:15px;">
+                    <span>Permisos PUSH (Nativos)</span>
                     <button class="btn-action" onclick="requestPush()">Permitir 🔔</button>
                 </div>
                 <div class="toggle-row" style="margin-top:15px; flex-direction:column; align-items:flex-start;">
@@ -167,6 +174,6 @@
     <audio id="yape-sound" src="https://www.myinstants.com/media/sounds/yape-notificacion.mp3" preload="auto"></audio>
 
     <!-- Scripts -->
-    <script src="app.js?v=20260312v14"></script>
+    <script src="app.js?v=20260312v15"></script>
 </body>
 </html>

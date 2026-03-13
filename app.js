@@ -8,23 +8,22 @@ let searchText = '';
 let selectedIds = new Set(); 
 
 // Load theme preference early
-function loadTheme() {
+function loadPreferences() {
     const isLight = localStorage.getItem('yapeos_theme') === 'light';
     if (isLight) document.body.classList.add('light-mode');
-    
-    // Set toggle state if element exists
-    const toggle = document.getElementById('theme-toggle');
-    if (toggle) toggle.checked = isLight;
-}
-loadTheme();
+    const themeToggle = document.getElementById('theme-toggle');
+    if (themeToggle) themeToggle.checked = isLight;
 
-function loadSoundStr() {
-    const saved = localStorage.getItem('yapeos_sound');
-    if(saved) {
+    const notifEnabled = localStorage.getItem('yapeos_notif_enabled') !== 'false';
+    const notifToggle = document.getElementById('notif-toggle');
+    if (notifToggle) notifToggle.checked = notifEnabled;
+
+    const savedSound = localStorage.getItem('yapeos_sound');
+    if(savedSound) {
         const audio = document.getElementById('yape-sound');
         const select = document.getElementById('sound-select');
-        if(audio) audio.src = saved;
-        if(select) select.value = saved;
+        if(audio) audio.src = savedSound;
+        if(select) select.value = savedSound;
     }
 }
 
@@ -37,12 +36,18 @@ function toggleTheme() {
 
 function openSettings() {
     document.getElementById('settings-modal').style.display = 'flex';
-    loadTheme();
-    loadSoundStr();
+    loadPreferences();
 }
 
 function closeSettings() {
     document.getElementById('settings-modal').style.display = 'none';
+}
+
+function toggleNotifications() {
+    const toggle = document.getElementById('notif-toggle');
+    if(toggle) {
+        localStorage.setItem('yapeos_notif_enabled', toggle.checked);
+    }
 }
 
 function changeSound() {
@@ -51,7 +56,9 @@ function changeSound() {
     if(select && audio) {
         audio.src = select.value;
         localStorage.setItem('yapeos_sound', select.value);
-        audio.play().catch(()=>{}); // Preview
+        // Play preview
+        audio.currentTime = 0;
+        audio.play().catch(e => console.log("Auto-play blocked or error", e));
     }
 }
 
@@ -69,6 +76,9 @@ async function requestPush() {
 }
 
 function triggerNativeNotification(title, body) {
+    const enabled = localStorage.getItem('yapeos_notif_enabled') !== 'false';
+    if (!enabled) return;
+
     if (("Notification" in window) && Notification.permission === "granted") {
         try {
             new Notification(title, {
@@ -543,13 +553,15 @@ function animateValue(obj, start, end, duration, isCurrency) {
 }
 
 function playNotificationSound() {
+    const enabled = localStorage.getItem('yapeos_notif_enabled') !== 'false';
+    if (!enabled) return;
+
     const audio = document.getElementById('yape-sound');
     if (audio && audio.play) audio.play().catch(() => {});
 }
 
 // Init
 window.addEventListener('load', () => {
-    loadTheme();
-    loadSoundStr();
+    loadPreferences();
     setTimeout(initSystem, 300);
 });
