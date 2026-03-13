@@ -108,8 +108,12 @@ function startEmailListener(onNewNotification) {
             fetchAndProcess(['UNSEEN']);
 
             const startIdling = () => {
-                imap.idle();
-                console.log('--- [MONITOR] Escuchando en tiempo real (IDLE)... ---');
+                if (imap && typeof imap.idle === 'function') {
+                    imap.idle();
+                    console.log('--- [MONITOR] Escuchando en tiempo real (IDLE)... ---');
+                } else {
+                    console.warn('--- [MONITOR] Gmail IDLE no disponible en este entorno, usando escucha pasiva ---');
+                }
             };
 
             startIdling();
