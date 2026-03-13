@@ -585,8 +585,27 @@ function playNotificationSound(force = false) {
     }
 }
 
+// Audio Unlocker: Browsers require a user interaction to allow sound.
+function initAudioUnlocker() {
+    const unlock = () => {
+        const audio = document.getElementById('yape-sound');
+        if (audio) {
+            audio.play().then(() => {
+                audio.pause();
+                audio.currentTime = 0;
+                console.log("Audio system unlocked");
+                document.removeEventListener('click', unlock);
+                document.removeEventListener('touchstart', unlock);
+            }).catch(e => console.log("Unlock failed", e));
+        }
+    };
+    document.addEventListener('click', unlock);
+    document.addEventListener('touchstart', unlock);
+}
+
 // Init
 window.addEventListener('load', () => {
     loadPreferences();
+    initAudioUnlocker();
     setTimeout(initSystem, 300);
 });
