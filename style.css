@@ -71,13 +71,11 @@ body {
 }
 
 .qr-wrapper {
-    background: #ffffff;
-    padding: 15px;
+    background: transparent;
     border-radius: 20px;
     display: flex;
     justify-content: center;
     align-items: center;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
 }
 
 .qr-wrapper img {
