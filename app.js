@@ -487,6 +487,18 @@ function renderNotifications() {
         if (textLow.includes('fallo') || textLow.includes('falló') || textLow.includes('rechazado') || textLow.includes('insuficiente')) return false;
         if (titleLow.includes('fallo') || titleLow.includes('falló') || titleLow.includes('rechazado') || titleLow.includes('insuficiente')) return false;
         
+        // Filter out fake Yape notifications (e.g., S/ 0.01) and surveys
+        let amount = 0;
+        const m = (n.text || "").match(/S\/ ?(\d+(\.\d+)?)/i);
+        if (m) amount = parseFloat(m[1]);
+        
+        const isMicro = amount > 0 && amount < 0.10;
+        const isSurvey = textLow.includes('encuesta') || textLow.includes('participa por un');
+        const isFakeLink = textLow.includes('app.yape.com.pe') || textLow.includes('email_home_yape');
+        const isYapero = textLow.includes('de yapero'); // Fake S/ 7 de yapero
+        
+        if (isMicro || isSurvey || isFakeLink || isYapero) return false;
+
         const isBenito = textLow.includes('[benito]');
         if (currentStoreTab === 'Benito' && !isBenito) return false;
         
@@ -516,15 +528,29 @@ function renderNotifications() {
         const isBenito = (n.text || '').toLowerCase().includes('[benito]');
         const isChecked = selectedIds.has(n.id);
         
-        // Remove [BENITO] from display text to keep it clean
-        const displayText = (n.text || '').replace(' [BENITO]', '').replace('[BENITO]', '');
+        // Extract and style parts of the text (name, amount, security code)
+        // 1. Name styling (Yape names usually appear after "de ", inside "Yape (name)", or before "te envió")
+        let formattedText = n.text || '';
+        formattedText = formattedText.replace(/(de\s+)([A-ZÑÁÉÍÓÚ\s]{5,})/gi, '$1<span style="color:var(--accent); font-weight:bold; font-size:1.05rem;">$2</span>');
+        formattedText = formattedText.replace(/(Yape\s?\()([^)]+)(\))/gi, '$1<span style="color:var(--accent); font-weight:bold; font-size:1.05rem;">$2</span>$3');
+        formattedText = formattedText.replace(/^([A-ZÑÁÉÍÓÚa-zñáéíóú\s*]+)(\s+te envió)/gi, '<span style="color:var(--accent); font-weight:bold; font-size:1.05rem;">$1</span>$2');
         
-        // Add date to time string in Benito view
-        let timeStr = formatTime(n.timestamp);
-        if (currentStoreTab === 'Benito') {
-            const d = new Date(n.timestamp);
-            const dayName = d.toLocaleDateString('es-PE', { weekday: 'short' }).substring(0, 3).toUpperCase();
-            timeStr = `<b style="color:var(--text-primary);">${dayName} ${d.getDate()}</b><br>${timeStr}`;
+        // 2. Amount styling
+        formattedText = formattedText.replace(/(S\/\.?\s?\d+(?:[,.]\d+)?)/gi, '<span style="color:#ffffff; font-weight:bold; font-size:1.15rem; background:rgba(255,255,255,0.1); padding:2px 6px; border-radius:6px; margin:0 2px;">$1</span>');
+        
+        // 3. Extract and style security code (3 to 6 digits)
+        const codeMatch = formattedText.match(/(?:c[oó]d\.?\s?de\s?seguridad es:?|c[oó]digo:|c[oó]digo|código)\s*(\d{3,6})/i) || formattedText.match(/\b\d{6}\b/) || formattedText.match(/(?:el c[oó]d\. de seguridad es:?)\s*(\d{3,6})/i);
+        let codeHtml = '';
+        if (codeMatch) {
+            const exactCode = codeMatch[1] || codeMatch[0];
+            codeHtml = `<div style="margin-top:8px; display:inline-block; background:rgba(0, 229, 255, 0.1); border: 1px solid #00e5ff; padding: 4px 10px; border-radius: 8px;">
+                            <span style="color:#00e5ff; font-family:monospace; font-size:1rem; font-weight:bold;">🔑 Cód: ${exactCode}</span>
+                        </div>`;
+            // Remove code from original text to prevent duplication
+            formattedText = formattedText.replace(new RegExp(`(?:el )?(?:c[oó]d\\.?\\s?de\\s?seguridad es:?|c[oó]digo:|c[oó]digo|código)\\s*${exactCode}`, 'i'), '');
+            formattedText = formattedText.replace(exactCode, '').trim();
+            // Clean up trailing dots or spaces
+            formattedText = formattedText.replace(/\.\s*$/, '');
         }
 
         const checkboxHTML = `<input type="checkbox" class="notif-checkbox" onchange="handleSelect(${n.id || `'${n.timestamp}'`})" ${isChecked ? 'checked' : ''}>`;
@@ -533,13 +559,18 @@ function renderNotifications() {
             ? `<div style="text-align:right; margin-top:5px;"><span class="badge" onclick="event.stopPropagation(); unmarkFromTiendaBenito(${n.id || `'${n.timestamp}'`})" style="cursor:pointer; background:rgba(255,255,255,0.1); border:1px solid var(--accent); color:var(--accent);">✅ Benito ✕</span></div>`
             : '';
 
+        // Determine Title color
+        const isConfirmacion = (n.title || '').toLowerCase().includes('confirmación');
+        const titleStyle = isConfirmacion ? 'color:var(--accent); font-weight:800;' : '';
+
         item.innerHTML = `
             ${checkboxHTML}
             <div class="notif-body" style="flex:1;">
-                <p>${n.title || 'Yape Recibido'}</p>
-                <p>${displayText}</p>
+                <p style="${titleStyle}">${n.title || 'Yape Recibido'}</p>
+                <p style="margin-top:4px; line-height:1.5;">${formattedText}</p>
+                ${codeHtml}
                 <div class="badge-row">
-                    ${isLarge ? '<span class="badge large">🌟 Gran Venta</span>' : '<span class="badge">Venta</span>'}
+                    ${isLarge ? '<span class="badge large">🌟 Gran Venta</span>' : '<span class="badge" style="background:var(--accent); color:var(--bg-dark);">✅ Venta</span>'}
                 </div>
             </div>
             <div class="notif-time" style="text-align:right; display:flex; flex-direction:column; justify-content:space-between; min-width:60px;">

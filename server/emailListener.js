@@ -80,14 +80,26 @@ function startEmailListener(onNewNotification) {
 
                             if (amountMatch) {
                                 let amountStr = amountMatch[1].replace(',', '.');
-                                onNewNotification({
-                                    title: "Yape por Email",
-                                    text: `Recibiste S/ ${amountStr} de ${sender}`,
-                                    amount: amountStr,
-                                    sender: sender,
-                                    source: 'email'
-                                });
-                                console.log(`--- [LOG] ¡EXITO! S/ ${amountStr} procesado ---`);
+                                let numAmount = parseFloat(amountStr);
+                                
+                                const textLow = text.toLowerCase();
+                                const isMicro = numAmount > 0 && numAmount < 0.10;
+                                const isSurvey = textLow.includes('encuesta') || textLow.includes('participa por un');
+                                const isFakeLink = textLow.includes('app.yape.com.pe') || textLow.includes('email_home_yape');
+                                const isYapero = textLow.includes('de yapero'); // Fake S/ 7 de yapero
+                                
+                                if (isMicro || isSurvey || isFakeLink || isYapero) {
+                                    console.log(`--- [LOG] EMAIL IGNORADO (FALSO/SPAM): S/ ${amountStr} de ${sender} ---`);
+                                } else {
+                                    onNewNotification({
+                                        title: "Yape por Email",
+                                        text: `Recibiste S/ ${amountStr} de ${sender}`,
+                                        amount: amountStr,
+                                        sender: sender,
+                                        source: 'email'
+                                    });
+                                    console.log(`--- [LOG] ¡EXITO! S/ ${amountStr} procesado ---`);
+                                }
                             }
                         }
                     });
