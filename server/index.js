@@ -45,6 +45,11 @@ const io = new Server(server, {
     cors: { origin: "*", methods: ["GET", "POST"] }
 });
 
+// --- OPTIMIZACIÓN RENDER: EVITAR 502 BAD GATEWAY ---
+// Según la guía de Render, esto ayuda con los problemas de timeout e intermitencia.
+server.keepAliveTimeout = 120000; // 120 segundos
+server.headersTimeout = 125000;   // Un poco más que el keepAliveTimeout
+
 // Función para procesar nuevas notificaciones con de-duplicación inteligente
 function handleNewNotification(data) {
     const now = new Date();
@@ -155,4 +160,14 @@ app.get('*', (req, res) => {
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`Servidor 24/7 escuchando en puerto ${PORT}`);
+});
+
+// --- SEGURIDAD EXTRA: EVITAR QUE EL SERVIDOR COLAPSE ---
+process.on('uncaughtException', (err) => {
+    console.error('--- [CRITICAL] Uncaught Exception:', err);
+    // No matamos el proceso, intentamos que siga vivo
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('--- [CRITICAL] Unhandled Rejection at:', promise, 'reason:', reason);
 });

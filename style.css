@@ -35,9 +35,10 @@ body {
     background: var(--bg-dark);
     color: var(--text-primary);
     min-height: 100vh;
-    padding: 20px;
+    padding: 10px; /* Reduced padding for mobile */
     display: flex;
     justify-content: center;
+    overflow-x: hidden; /* Prevent horizontal scroll */
 }
 
 .app-layout {
@@ -251,6 +252,11 @@ body.light-mode .modal-header {
     display: none;
 }
 
+/* Momentum scroll for iOS */
+.date-selector {
+    -webkit-overflow-scrolling: touch;
+}
+
 .date-item {
     min-width: 75px;
     height: 95px;
@@ -315,9 +321,10 @@ body.light-mode .modal-header {
 }
 
 .card p {
-    font-size: 1.6rem;
+    font-size: 1.8rem; /* Slightly larger on mobile */
     font-weight: 800;
-    letter-spacing: -0.5px;
+    letter-spacing: -1px;
+    white-space: nowrap; /* Prevent breaking S/ */
 }
 
 .card.total p {
@@ -391,14 +398,14 @@ select.search-bar option {
 .notification-item {
     background: var(--glass);
     border: 1px solid var(--glass-border);
-    padding: 18px;
-    border-radius: 26px;
+    padding: 14px; /* Slightly tighter on mobile */
+    border-radius: 20px;
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     animation: slideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     opacity: 0;
-    flex-wrap: wrap;
+    flex-wrap: nowrap; /* Keep time and text on same row if possible */
 }
 
 @keyframes slideUpFade {

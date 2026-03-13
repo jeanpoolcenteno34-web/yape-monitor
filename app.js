@@ -31,6 +31,10 @@ function loadPreferences() {
         if(audio) audio.src = savedSound;
         if(select) select.value = savedSound;
     }
+
+    const animEnabled = localStorage.getItem('yapeos_anim_enabled') !== 'false';
+    const animToggle = document.getElementById('anim-toggle');
+    if (animToggle) animToggle.checked = animEnabled;
     
     updatePushUI();
 }
@@ -113,6 +117,11 @@ function changeSound() {
         audio.load();
         localStorage.setItem('yapeos_sound', select.value);
     }
+}
+
+function toggleAnimations() {
+    const aToggle = document.getElementById('anim-toggle');
+    if(aToggle) localStorage.setItem('yapeos_anim_enabled', aToggle.checked);
 }
 
 
@@ -657,8 +666,24 @@ function updateStats() {
 }
 
 // Function to animate numbers counting up
+const activeAnimations = new Map();
+
 function animateValue(obj, start, end, duration, isCurrency) {
     if (!obj) return;
+    
+    // Check if animations are enabled
+    const animEnabled = localStorage.getItem('yapeos_anim_enabled') !== 'false';
+    if (!animEnabled) {
+        if (isCurrency) obj.innerText = `S/ ${end.toFixed(2)}`;
+        else obj.innerText = end;
+        return;
+    }
+
+    // Cancel previous animation if exists for this specific object
+    if (activeAnimations.has(obj)) {
+        cancelAnimationFrame(activeAnimations.get(obj));
+    }
+
     let startTimestamp = null;
     const step = (timestamp) => {
         if (!startTimestamp) startTimestamp = timestamp;
@@ -672,13 +697,16 @@ function animateValue(obj, start, end, duration, isCurrency) {
         }
         
         if (progress < 1) {
-            window.requestAnimationFrame(step);
+            const animId = window.requestAnimationFrame(step);
+            activeAnimations.set(obj, animId);
         } else {
             if (isCurrency) obj.innerText = `S/ ${end.toFixed(2)}`;
             else obj.innerText = end;
+            activeAnimations.delete(obj);
         }
     };
-    window.requestAnimationFrame(step);
+    const animId = window.requestAnimationFrame(step);
+    activeAnimations.set(obj, animId);
 }
 
 // --- AUDIO UNLOCKER FOR MOBILE ---

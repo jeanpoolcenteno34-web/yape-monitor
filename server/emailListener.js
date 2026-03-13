@@ -143,10 +143,20 @@ function startEmailListener(onNewNotification) {
 
     imap.on('error', (err) => {
         console.error('--- [ERROR] Error en Monitor IMAP:', err.message);
+        // Si hay error de conexión, el evento 'end' o 'close' se encargará de reintentar
     });
 
     imap.once('end', () => {
         console.log('--- [RECONECT] Conexión cerrada. Reintentando en 10s... ---');
+        clearInterval(heartbeat);
+        clearInterval(backupSync);
+        setTimeout(() => startEmailListener(onNewNotification), 10000);
+    });
+
+    imap.once('close', () => {
+        console.log('--- [RECONECT] Conexión perdida (Close). Reintentando en 10s... ---');
+        clearInterval(heartbeat);
+        clearInterval(backupSync);
         setTimeout(() => startEmailListener(onNewNotification), 10000);
     });
 
