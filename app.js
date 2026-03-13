@@ -283,6 +283,39 @@ async function markSelectedAsBenito() {
     updateStats();
 }
 
+async function unmarkSelectedFromBenito() {
+    if(selectedIds.size === 0) return;
+    
+    for(let id of selectedIds) {
+        await unmarkFromTiendaBenito(id, false);
+    }
+    
+    selectedIds.clear();
+    updateBanner();
+    renderNotifications();
+    updateStats();
+}
+
+async function unmarkFromTiendaBenito(id, shouldRefresh = true) {
+    if(!id) return;
+    const notif = allNotifications.find(n => n.id === id);
+    if(!notif) return;
+    
+    if(notif.text.includes('[BENITO]')) {
+        const newText = notif.text.replace(' [BENITO]', '').replace('[BENITO]', '');
+        try {
+            const { error } = await db.from('notificaciones').update({ text: newText }).eq('id', id);
+            if(!error) {
+                notif.text = newText;
+                if(shouldRefresh) {
+                    renderNotifications();
+                    updateStats();
+                }
+            }
+        } catch(e) { console.error(e); }
+    }
+}
+
 function exportData() {
     window.print();
 }
@@ -389,7 +422,7 @@ function renderNotifications() {
         const isChecked = selectedIds.has(n.id);
         
         // Remove [BENITO] from display text to keep it clean
-        const displayText = (n.text || '').replace(' [BENITO]', '');
+        const displayText = (n.text || '').replace(' [BENITO]', '').replace('[BENITO]', '');
         
         // Add date to time string in Benito view
         let timeStr = formatTime(n.timestamp);
@@ -399,12 +432,14 @@ function renderNotifications() {
             timeStr = `<b style="color:var(--text-primary);">${dayName} ${d.getDate()}</b><br>${timeStr}`;
         }
 
-        const actionsHTML = (!isBenito) 
-            ? `<input type="checkbox" class="notif-checkbox" onchange="handleSelect(${n.id || `'${n.timestamp}'`})" ${isChecked ? 'checked' : ''}>`
-            : `<div style="text-align:right; margin-top:5px;"><span class="badge">✅ Benito</span></div>`;
+        const checkboxHTML = `<input type="checkbox" class="notif-checkbox" onchange="handleSelect(${n.id || `'${n.timestamp}'`})" ${isChecked ? 'checked' : ''}>`;
+        
+        const benitoBadgeHTML = isBenito 
+            ? `<div style="text-align:right; margin-top:5px;"><span class="badge" onclick="event.stopPropagation(); unmarkFromTiendaBenito(${n.id || `'${n.timestamp}'`})" style="cursor:pointer; background:rgba(255,255,255,0.1); border:1px solid var(--accent); color:var(--accent);">✅ Benito ✕</span></div>`
+            : '';
 
         item.innerHTML = `
-            ${(!isBenito) ? actionsHTML : ''}
+            ${checkboxHTML}
             <div class="notif-body" style="flex:1;">
                 <p>${n.title || 'Yape Recibido'}</p>
                 <p>${displayText}</p>
@@ -414,7 +449,7 @@ function renderNotifications() {
             </div>
             <div class="notif-time" style="text-align:right; display:flex; flex-direction:column; justify-content:space-between; min-width:60px;">
                 <span>${timeStr}</span>
-                ${isBenito ? actionsHTML : ''}
+                ${benitoBadgeHTML}
             </div>
         `;
         list.appendChild(item);

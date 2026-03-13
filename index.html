@@ -85,7 +85,10 @@
             <!-- Floating Banner for Multi Selection -->
             <div id="multi-select-banner" class="floating-banner" style="display:none;">
                 <span id="select-count">0 seleccionados</span>
-                <button onclick="markSelectedAsBenito()" class="btn-mark-store">🏷️ Marcar como Benito</button>
+                <div style="display:flex; gap:10px;">
+                    <button onclick="markSelectedAsBenito()" class="btn-mark-store">🏷️ Marcar Benito</button>
+                    <button onclick="unmarkSelectedFromBenito()" class="btn-mark-store" style="background:var(--bg-dark); border-color:var(--text-secondary); color:var(--text-secondary);">✕ Desmarcar</button>
+                </div>
             </div>
         </div>
 
@@ -145,6 +148,6 @@
     <audio id="yape-sound" src="https://www.myinstants.com/media/sounds/yape-notificacion.mp3" preload="auto"></audio>
 
     <!-- Scripts -->
-    <script src="app.js?v=20260312v12"></script>
+    <script src="app.js?v=20260312v13"></script>
 </body>
 </html>
