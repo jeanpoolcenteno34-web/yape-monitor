@@ -1,4 +1,4 @@
-const CACHE_NAME = 'yapeos-v10';
+const CACHE_NAME = 'yapeos-v11';
 const ASSETS = [
     './index.html',
     './style.css',

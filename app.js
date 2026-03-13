@@ -348,7 +348,9 @@ function renderNotifications() {
 
     // Filter by Date, Prueba Nube, Search Text, and Active Store Tab
     const filtered = allNotifications.filter(n => {
-        if (getDateKey(n.timestamp) !== selectedDateKey) return false;
+        // Only filter by Date if we are in 'All' tab
+        if (currentStoreTab === 'All' && getDateKey(n.timestamp) !== selectedDateKey) return false;
+        
         if (n.title === 'Prueba Nube') return false;
         
         // Strict Error Filtering
@@ -388,6 +390,14 @@ function renderNotifications() {
         
         // Remove [BENITO] from display text to keep it clean
         const displayText = (n.text || '').replace(' [BENITO]', '');
+        
+        // Add date to time string in Benito view
+        let timeStr = formatTime(n.timestamp);
+        if (currentStoreTab === 'Benito') {
+            const d = new Date(n.timestamp);
+            const dayName = d.toLocaleDateString('es-PE', { weekday: 'short' }).substring(0, 3).toUpperCase();
+            timeStr = `<b style="color:var(--text-primary);">${dayName} ${d.getDate()}</b><br>${timeStr}`;
+        }
 
         const actionsHTML = (!isBenito) 
             ? `<input type="checkbox" class="notif-checkbox" onchange="handleSelect(${n.id || `'${n.timestamp}'`})" ${isChecked ? 'checked' : ''}>`
@@ -402,8 +412,8 @@ function renderNotifications() {
                     ${isLarge ? '<span class="badge large">🌟 Gran Venta</span>' : '<span class="badge">Venta</span>'}
                 </div>
             </div>
-            <div class="notif-time" style="text-align:right; display:flex; flex-direction:column; justify-content:space-between;">
-                <span>${formatTime(n.timestamp)}</span>
+            <div class="notif-time" style="text-align:right; display:flex; flex-direction:column; justify-content:space-between; min-width:60px;">
+                <span>${timeStr}</span>
                 ${isBenito ? actionsHTML : ''}
             </div>
         `;
@@ -418,19 +428,25 @@ function updateStats() {
     const cLabel = document.getElementById('count-label');
     
     const isToday = getDateKey(new Date()) === selectedDateKey;
-    if (tLabel) tLabel.innerText = isToday ? "Total Recibido Hoy" : "Total del Día";
-    if (cLabel) cLabel.innerText = isToday ? "Ventas Hoy" : "Ventas del Día";
+    
+    if (currentStoreTab === 'Benito') {
+        if (tLabel) tLabel.innerText = "Histórico Benito";
+        if (cLabel) cLabel.innerText = "Ventas Benito";
+    } else {
+        if (tLabel) tLabel.innerText = isToday ? "Total Recibido Hoy" : "Total del Día";
+        if (cLabel) cLabel.innerText = isToday ? "Ventas Hoy" : "Ventas del Día";
+    }
 
     let dayTotal = 0;
     let dayCount = 0;
 
     allNotifications.forEach(n => {
-        if (getDateKey(n.timestamp) === selectedDateKey) {
-            const isBenito = (n.text || '').toLowerCase().includes('[benito]');
-            if (currentStoreTab === 'Benito' && !isBenito) return;
+        const isBenito = (n.text || '').toLowerCase().includes('[benito]');
+        if (currentStoreTab === 'All' && getDateKey(n.timestamp) !== selectedDateKey) return;
+        if (currentStoreTab === 'Benito' && !isBenito) return;
             
-            const text = (n.text || "").toLowerCase();
-            const title = (n.title || "").toLowerCase();
+        const text = (n.text || "").toLowerCase();
+        const title = (n.title || "").toLowerCase();
             
             // Strict check
             const isRecibido = text.includes('recibiste') || title.includes('confirmación') || text.includes('yapeaste');
@@ -443,7 +459,6 @@ function updateStats() {
                 dayTotal += amount;
                 dayCount++;
             }
-        }
     });
 
     animateValue(tAmount, parseFloat(tAmount.innerText.replace('S/ ', '')) || 0, dayTotal, 500, true);
