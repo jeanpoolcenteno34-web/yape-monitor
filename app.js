@@ -544,7 +544,12 @@ function renderNotifications() {
         if (isMicro || isSurvey || isFakeLink || isYapero) return false;
 
         const isBenito = textLow.includes('[benito]');
-        if (currentStoreTab === 'Benito' && !isBenito) return false;
+        // Benito tab must ALSO respect the selected date
+        if (currentStoreTab === 'Benito' && (!isBenito || getDateKey(n.timestamp) !== selectedDateKey)) return false;
+
+        // Additional local filtering for Desconocido and own transfers
+        if (textLow.includes('yapeaste') || textLow.includes('enviaste') || textLow.includes('cuenta de ahorro') || 
+            (n.sender && n.sender.toLowerCase().includes('desconocido'))) return false;
         
         if (searchText) {
             if (!textLow.includes(searchText) && !titleLow.includes(searchText)) return false;

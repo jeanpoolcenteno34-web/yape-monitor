@@ -63,13 +63,15 @@ function startEmailListener(onNewNotification) {
                             
                             let sender = 'Desconocido';
                             
-                            // --- FILTRO DE SEGURIDAD PARA TRANSFERENCIAS PROPIAS ---
+                            // --- FILTRO DE SEGURIDAD PARA MOVIMIENTOS INTERNOS Y SALIENTES ---
                             const textLow = text.toLowerCase();
                             const isInternal = textLow.includes('tu cuenta de ahorro') || 
                                               textLow.includes('mis cuentas') || 
                                               textLow.includes('entre tus cuentas') ||
                                               textLow.includes('cuenta de ahorro soles') ||
-                                              textLow.includes('propia cuenta');
+                                              textLow.includes('propia cuenta') ||
+                                              textLow.includes('yapeaste') ||
+                                              textLow.includes('enviaste');
 
                             if (isInternal) {
                                 console.log(`--- [LOG] EMAIL IGNORADO (MOVIMIENTO INTERNO) ---`);
@@ -88,9 +90,17 @@ function startEmailListener(onNewNotification) {
                                 let potentialName = nameMatch[1].trim();
                                 if (!potentialName.toLowerCase().includes('exitosamente') && 
                                     !potentialName.toLowerCase().includes('soles') &&
+                                    !potentialName.toLowerCase().includes('cuenta de ahorro') &&
+                                    !potentialName.toLowerCase().includes('desconocido') &&
                                     potentialName.length > 2) {
                                     sender = potentialName.toUpperCase();
                                 }
+                            }
+
+                            // Si el remitente sigue siendo Desconocido, ignoramos
+                            if (sender === 'Desconocido') {
+                                console.log(`--- [LOG] EMAIL IGNORADO (REMITENTE DESCONOCIDO) ---`);
+                                return;
                             }
 
                             if (amountMatch) {

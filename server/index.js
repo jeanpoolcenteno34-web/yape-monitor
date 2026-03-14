@@ -94,12 +94,18 @@ function handleNewNotification(data) {
         return false;
     });
 
-    // FILTRO DE MOVIMIENTOS INTERNOS (BCP/Yape)
+    // FILTRO DE MOVIMIENTOS INTERNOS Y SALIENTES (BCP/Yape)
+    const senderLow = (data.sender || data.title || '').toLowerCase();
     if (currentText.includes('tu cuenta de ahorro') || 
         currentText.includes('mis cuentas') || 
         currentText.includes('entre tus cuentas') || 
-        currentText.includes('propia cuenta')) {
-        console.log(`--- [FILTRO] Ignorando movimiento interno ---`);
+        currentText.includes('propia cuenta') ||
+        currentText.includes('cuenta de ahorro') ||
+        currentText.includes('yapeaste') ||
+        currentText.includes('enviaste') ||
+        senderLow.includes('desconocido') ||
+        senderLow.includes('cuenta de ahorro')) {
+        console.log(`--- [FILTRO] Ignorando movimiento interno/saliente o desconocido ---`);
         return;
     }
 
