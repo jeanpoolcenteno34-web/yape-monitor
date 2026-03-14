@@ -28,7 +28,7 @@
     <script src="/socket.io/socket.io.js"></script>
 
     <!-- Styles -->
-    <link rel="stylesheet" href="style.css?v=41">
+    <link rel="stylesheet" href="style.css?v=42">
 </head>
 
 <body>
@@ -150,6 +150,13 @@
                     </label>
                 </div>
                 <div class="toggle-row" style="margin-top:15px;">
+                    <span>Animación de Lista (Entrada) 🎬</span>
+                    <label class="switch">
+                        <input type="checkbox" id="list-anim-toggle" onchange="toggleListAnimations()" checked>
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+                <div class="toggle-row" style="margin-top:15px;">
                     <span>Convertir en App Real</span>
                     <button class="btn-action" onclick="showInstallGuide()" style="border-color: var(--accent); color: var(--accent);">Instalar 📲</button>
                 </div>
@@ -190,7 +197,7 @@
             
             <div class="settings-group">
                 <p style="font-size:0.8rem; color:var(--text-secondary); text-align:center; margin-bottom:5px;">Cambios se guardan automáticamente</p>
-                <p style="font-size:0.6rem; color:var(--accent); text-align:center; opacity:0.6;">Build Version: 41</p>
+                <p style="font-size:0.6rem; color:var(--accent); text-align:center; opacity:0.6;">Build Version: 42</p>
             </div>
         </div>
     </div>
@@ -223,6 +230,6 @@
     <audio id="yape-sound" src="https://www.myinstants.com/media/sounds/yape-notificacion.mp3" preload="auto"></audio>
 
     <!-- Scripts -->
-    <script src="app.js?v=41"></script>
+    <script src="app.js?v=42"></script>
 </body>
 </html>
