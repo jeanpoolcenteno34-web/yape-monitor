@@ -421,6 +421,7 @@ select.search-bar option {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;
+    transition: none !important;
 }
 
 .notif-body {

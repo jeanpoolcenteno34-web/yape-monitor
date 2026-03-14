@@ -35,6 +35,11 @@ function loadPreferences() {
     const animEnabled = localStorage.getItem('yapeos_anim_enabled') !== 'false';
     const animToggle = document.getElementById('anim-toggle');
     if (animToggle) animToggle.checked = animEnabled;
+
+    const listAnimsEnabled = localStorage.getItem('yapeos_list_anim_enabled') !== 'false';
+    const listAnimToggle = document.getElementById('list-anim-toggle');
+    if (listAnimToggle) listAnimToggle.checked = listAnimsEnabled;
+    if (!listAnimsEnabled) document.getElementById('notifications-list').classList.add('no-list-animations');
     
     updatePushUI();
 }
@@ -122,6 +127,18 @@ function changeSound() {
 function toggleAnimations() {
     const aToggle = document.getElementById('anim-toggle');
     if(aToggle) localStorage.setItem('yapeos_anim_enabled', aToggle.checked);
+}
+
+function toggleListAnimations() {
+    const lToggle = document.getElementById('list-anim-toggle');
+    if(lToggle) {
+        localStorage.setItem('yapeos_list_anim_enabled', lToggle.checked);
+        const list = document.getElementById('notifications-list');
+        if (list) {
+            if (lToggle.checked) list.classList.remove('no-list-animations');
+            else list.classList.add('no-list-animations');
+        }
+    }
 }
 
 
