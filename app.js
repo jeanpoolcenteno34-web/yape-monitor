@@ -200,9 +200,17 @@ async function initSystem() {
 
     console.log("--- [SISTEMA] Iniciando Monitor ---");
     
-    // Fallback: al menos renderizar lo que tenemos (días vacíos/historial previo si hubiera)
-    selectedDateKey = getDateKey();
-    console.log("[SISTEMA] Render inicial con fecha:", selectedDateKey);
+    // Cargar persistencia de pestaña y fecha
+    selectedDateKey = localStorage.getItem('yapeos_last_date') || getDateKey();
+    currentStoreTab = localStorage.getItem('yapeos_last_tab') || 'All';
+    console.log("[SISTEMA] Render inicial con fecha:", selectedDateKey, "y pestaña:", currentStoreTab);
+    
+    // Sincronizar UI de pestañas
+    const tabAll = document.getElementById('tab-all');
+    const tabBenito = document.getElementById('tab-benito');
+    if (tabAll) tabAll.classList.toggle('active', currentStoreTab === 'All');
+    if (tabBenito) tabBenito.classList.toggle('active', currentStoreTab === 'Benito');
+
     renderApp();
 
     if (typeof window.supabase === 'undefined') {
@@ -348,6 +356,7 @@ function handleSearch() {
 
 function switchStore(storeName) {
     currentStoreTab = storeName;
+    localStorage.setItem('yapeos_last_tab', storeName);
     document.getElementById('tab-all').classList.toggle('active', storeName === 'All');
     document.getElementById('tab-benito').classList.toggle('active', storeName === 'Benito');
     
@@ -371,9 +380,26 @@ function handleSelect(id) {
 function updateBanner() {
     const banner = document.getElementById('multi-select-banner');
     const countSpan = document.getElementById('select-count');
+    const markBtn = document.querySelector('.btn-mark-store');
+    
     if(selectedIds.size > 0) {
         banner.style.display = 'flex';
         countSpan.innerText = `${selectedIds.size} yapeos seleccionados`;
+        
+        // Bug Fix: Check if all items are already marked
+        let allBenito = true;
+        for(let id of selectedIds) {
+            const notif = allNotifications.find(n => n.id === id);
+            if(!notif || !notif.text.includes('[BENITO]')) {
+                allBenito = false;
+                break;
+            }
+        }
+        if(markBtn) {
+            markBtn.disabled = allBenito;
+            markBtn.style.opacity = allBenito ? '0.3' : '1';
+            markBtn.style.cursor = allBenito ? 'not-allowed' : 'pointer';
+        }
     } else {
         banner.style.display = 'none';
     }
@@ -501,6 +527,7 @@ function renderDateSelector() {
         item.className = `date-item ${dateStr === selectedDateKey ? 'active' : ''}`;
         item.onclick = () => {
             selectedDateKey = dateStr;
+            localStorage.setItem('yapeos_last_date', dateStr);
             renderDateSelector();
             renderNotifications();
             updateStats();
@@ -588,6 +615,7 @@ function renderNotifications() {
         // 2. Name styling (Yape names usually appear after "de ", inside "Yape (name)", or before "te envió")
         formattedText = formattedText.replace(/(de\s+)([a-zA-ZÑÁÉÍÓÚáéíóú\s*]+)(?=$|<)/gi, '$1<span style="color:#00e5ff; font-weight:800; font-size:1.05rem;">$2</span>');
         formattedText = formattedText.replace(/(Yape\s?\()([^)]+)(\))/gi, '$1<span style="color:#00e5ff; font-weight:800; font-size:1.05rem;">$2</span>$3');
+        formattedText = formattedText.replace(/(Yape!\s*)([a-zA-ZÑÁÉÍÓÚáéíóú\s*]+)(\s+te envi[oó])/gi, '$1<span style="color:#00e5ff; font-weight:800; font-size:1.05rem;">$2</span>$3');
         formattedText = formattedText.replace(/^([a-zA-ZÑÁÉÍÓÚáéíóú\s*]+)(\s+te envi[oó])/gi, '<span style="color:#00e5ff; font-weight:800; font-size:1.05rem;">$1</span>$2');
         
         // 3. Extract and inline style security code (3 to 6 digits)
@@ -777,6 +805,13 @@ document.addEventListener('visibilitychange', () => {
         initSystem();
     }
 });
+
+// Background Sync cada 5 segundos (Super Velocidad)
+setInterval(() => {
+    if (document.visibilityState === 'visible' && db) {
+        initSystem();
+    }
+}, 5000);
 
 // Init
 window.addEventListener('load', () => {
