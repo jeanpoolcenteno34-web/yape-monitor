@@ -403,14 +403,17 @@ select.search-bar option {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    animation: slideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation: slideUpFade 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
     opacity: 0;
-    flex-wrap: nowrap; /* Keep time and text on same row if possible */
+    flex-wrap: nowrap;
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+    transform: translateZ(0);
 }
 
 @keyframes slideUpFade {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
+    from { opacity: 0; transform: translateY(10px) translateZ(0); }
+    to { opacity: 1; transform: translateY(0) translateZ(0); }
 }
 
 .notif-body {

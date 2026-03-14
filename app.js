@@ -612,11 +612,11 @@ function renderNotifications() {
         // 1. Amount styling (Must be done first to avoid breaking other tags if they overlap)
         formattedText = formattedText.replace(/(S\/\.?\s*\d+(?:[,.]\d+)?)/gi, '<span style="color:#ffffff; font-weight:800; font-size:1.15rem; background:rgba(255,255,255,0.12); padding:2px 6px; border-radius:6px; margin:0 2px;">$1</span>');
         
-        // 2. Name styling (Yape names usually appear after "de ", inside "Yape (name)", or before "te envió")
-        formattedText = formattedText.replace(/(de\s+)([a-zA-ZÑÁÉÍÓÚáéíóú\s*]+)(?=$|<)/gi, '$1<span style="color:#00e5ff; font-weight:800; font-size:1.05rem;">$2</span>');
+        // 2. Name styling (Soportando puntos como en 'S.', guiones y caracteres latinos)
+        formattedText = formattedText.replace(/(de\s+)([a-zA-ZÑÁÉÍÓÚáéíóú\s.*-]+)(?=$|<)/gi, '$1<span style="color:#00e5ff; font-weight:800; font-size:1.05rem;">$2</span>');
         formattedText = formattedText.replace(/(Yape\s?\()([^)]+)(\))/gi, '$1<span style="color:#00e5ff; font-weight:800; font-size:1.05rem;">$2</span>$3');
-        formattedText = formattedText.replace(/(Yape!\s*)([a-zA-ZÑÁÉÍÓÚáéíóú\s*]+)(\s+te envi[oó])/gi, '$1<span style="color:#00e5ff; font-weight:800; font-size:1.05rem;">$2</span>$3');
-        formattedText = formattedText.replace(/^([a-zA-ZÑÁÉÍÓÚáéíóú\s*]+)(\s+te envi[oó])/gi, '<span style="color:#00e5ff; font-weight:800; font-size:1.05rem;">$1</span>$2');
+        formattedText = formattedText.replace(/(Yape!\s*)([a-zA-ZÑÁÉÍÓÚáéíóú\s.*-]+)(\s+te envi[oó])/gi, '$1<span style="color:#00e5ff; font-weight:800; font-size:1.05rem;">$2</span>$3');
+        formattedText = formattedText.replace(/^([a-zA-ZÑÁÉÍÓÚáéíóú\s.*-]+)(\s+te envi[oó])/gi, '<span style="color:#00e5ff; font-weight:800; font-size:1.05rem;">$1</span>$2');
         
         // 3. Extract and inline style security code (3 to 6 digits)
         formattedText = formattedText.replace(/(el\s+)?(c[oó]d\.?\s?de\s?seguridad es:?|c[oó]digo:?)\s*(\d{3,6})/gi, 
