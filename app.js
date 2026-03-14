@@ -642,7 +642,10 @@ function updateStats() {
 
     allNotifications.forEach(n => {
         const isBenito = (n.text || '').toLowerCase().includes('[benito]');
-        if (currentStoreTab === 'All' && getDateKey(n.timestamp) !== selectedDateKey) return;
+        
+        // AMBOS deben respetar la fecha seleccionada ahora para ventas del día
+        if (getDateKey(n.timestamp) !== selectedDateKey) return;
+        
         if (currentStoreTab === 'Benito' && !isBenito) return;
             
         const text = (n.text || "").toLowerCase();

@@ -94,8 +94,17 @@ function handleNewNotification(data) {
         return false;
     });
 
+    // FILTRO DE MOVIMIENTOS INTERNOS (BCP/Yape)
+    if (currentText.includes('tu cuenta de ahorro') || 
+        currentText.includes('mis cuentas') || 
+        currentText.includes('entre tus cuentas') || 
+        currentText.includes('propia cuenta')) {
+        console.log(`--- [FILTRO] Ignorando movimiento interno ---`);
+        return;
+    }
+
     if (isDuplicate) {
-        console.log(`--- [DEDUPLICACIÓN] Ignorando aviso repetido ---`);
+        console.log(`--- [DEDUPLICACIÓN] Bloqueado desde ${source} ---`);
         return;
     }
 

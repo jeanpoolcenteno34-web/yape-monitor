@@ -56,24 +56,40 @@ function startEmailListener(onNewNotification) {
                                        subject.includes('confirmaci') ||
                                        text.includes('Yape') ||
                                        text.includes('Abono') ||
-                                       text.includes('envió');
-
-                        if (isYape) {
+                                       text.includes('envió');                        if (isYape) {
                             // Regex mejorada para montos S/ o S/. con decimales opcionales
                             const amountMatch = text.match(/S\/\.?\s?(\d+(?:[,.]\d+)?)/i) || 
-                                              text.match(/monto:\s?S\/\.?\s?(\d+(?:[,.]\d+)?)/i);
+                                               text.match(/monto:\s?S\/\.?\s?(\d+(?:[,.]\d+)?)/i);
                             
                             let sender = 'Desconocido';
+                            
+                            // --- FILTRO DE SEGURIDAD PARA TRANSFERENCIAS PROPIAS ---
+                            const textLow = text.toLowerCase();
+                            const isInternal = textLow.includes('tu cuenta de ahorro') || 
+                                              textLow.includes('mis cuentas') || 
+                                              textLow.includes('entre tus cuentas') ||
+                                              textLow.includes('cuenta de ahorro soles') ||
+                                              textLow.includes('propia cuenta');
+
+                            if (isInternal) {
+                                console.log(`--- [LOG] EMAIL IGNORADO (MOVIMIENTO INTERNO) ---`);
+                                return;
+                            }
+
                             // Regex para capturar el nombre del remitente en diferentes formatos de BCP/Yape
-                            const nameMatch = text.match(/Yape\s?\(([^)]+)\)/i) || 
-                                             text.match(/de\s+([A-Z\s]{5,})/i) ||
-                                             text.match(/Origen:\s?([^\n\r]+)/i) ||
-                                             text.match(/([A-Z][a-z]+ [A-Z][a-z]+)\s+te envió/i);
+                            // 1. Formato "Yape! NOMBRE te envió..."
+                            // 2. Formato "Origen: NOMBRE"
+                            // 3. Formato "de NOMBRE"
+                            const nameMatch = text.match(/Yape!\s*([A-Z\s]{2,})\s*te envi/i) ||
+                                             text.match(/Origen:\s*([A-Z\s]{4,})/i) ||
+                                             text.match(/Yape\s?\(([^)]+)\)/i);
                             
                             if (nameMatch) {
-                                const potentialName = nameMatch[1].trim();
-                                if (!potentialName.toLowerCase().includes('exitosamente')) {
-                                    sender = potentialName;
+                                let potentialName = nameMatch[1].trim();
+                                if (!potentialName.toLowerCase().includes('exitosamente') && 
+                                    !potentialName.toLowerCase().includes('soles') &&
+                                    potentialName.length > 2) {
+                                    sender = potentialName.toUpperCase();
                                 }
                             }
 
@@ -81,7 +97,6 @@ function startEmailListener(onNewNotification) {
                                 let amountStr = amountMatch[1].replace(',', '.');
                                 let numAmount = parseFloat(amountStr);
                                 
-                                const textLow = text.toLowerCase();
                                 const isMicro = numAmount > 0 && numAmount < 0.10;
                                 const isSurvey = textLow.includes('encuesta') || textLow.includes('participa por un') || textLow.includes('prueba');
                                 const isFakeLink = textLow.includes('app.yape.com.pe') || textLow.includes('email_home_yape');
@@ -92,12 +107,12 @@ function startEmailListener(onNewNotification) {
                                 } else {
                                     onNewNotification({
                                         title: "Yape por Email",
-                                        text: `Recibiste S/ ${amountStr} de ${sender}`,
+                                        text: `¡${sender} te envió un pago por S/ ${amountStr}!`, // Texto más uniforme
                                         amount: amountStr,
                                         sender: sender,
                                         source: 'email'
                                     });
-                                    console.log(`--- [LOG] ¡EXITO! S/ ${amountStr} procesado ---`);
+                                    console.log(`--- [LOG] ¡EXITO! S/ ${amountStr} de ${sender} procesado ---`);
                                 }
                             }
                         }
