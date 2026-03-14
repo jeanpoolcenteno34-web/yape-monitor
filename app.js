@@ -113,16 +113,6 @@ function toggleNotifications() {
     if(nToggle) localStorage.setItem('yapeos_notif_enabled', nToggle.checked);
 }
 
-function changeSound() {
-    const select = document.getElementById('sound-select');
-    const audio = document.getElementById('yape-sound');
-    if(select && audio) {
-        audio.pause();
-        audio.src = select.value;
-        audio.load();
-        localStorage.setItem('yapeos_sound', select.value);
-    }
-}
 
 function toggleAnimations() {
     const aToggle = document.getElementById('anim-toggle');

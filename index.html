@@ -126,7 +126,7 @@
     </div>
 
     <!-- Modal de Configuración -->
-    <div id="settings-modal" class="modal-overlay" style="display:none;">
+    <div id="settings-modal" class="modal-overlay" style="display:none;" onclick="if(event.target === this) closeSettings()">
         <div class="modal-content">
             <div class="modal-header">
                 <button class="icon-btn close-modal" onclick="closeSettings()" title="Cerrar">✕</button>
@@ -182,22 +182,11 @@
                         <span class="slider round"></span>
                     </label>
                 </div>
-                <div class="toggle-row" style="margin-top:15px; flex-direction:column; align-items:flex-start;">
-                    <span>Sonido de Alerta</span>
-                    <div style="display:flex; gap:10px; width:100%; margin-top:10px;">
-                        <select id="sound-select" onchange="changeSound()" class="search-bar">
-                            <option value="https://www.myinstants.com/media/sounds/yape-notificacion.mp3">Clásico Yape</option>
-                            <option value="https://www.myinstants.com/media/sounds/ding-idea.mp3">Campanita (Tienda)</option>
-                            <option value="https://www.myinstants.com/media/sounds/coin-drop-4.mp3">Moneda cayendo</option>
-                        </select>
-                        <button class="btn-action" onclick="playNotificationSound(true)" style="white-space:nowrap;">Probar 🔊</button>
-                    </div>
-                </div>
             </div>
             
             <div class="settings-group">
                 <p style="font-size:0.8rem; color:var(--text-secondary); text-align:center; margin-bottom:5px;">Cambios se guardan automáticamente</p>
-                <p style="font-size:0.6rem; color:var(--accent); text-align:center; opacity:0.6;">Build Version: 42</p>
+                <p style="font-size:0.6rem; color:var(--accent); text-align:center; opacity:0.6;">Build Version: 43</p>
             </div>
         </div>
     </div>
@@ -205,7 +194,7 @@
 
 
     <!-- Modal de Guía de Instalación -->
-    <div id="install-modal" class="modal-overlay" style="display:none;">
+    <div id="install-modal" class="modal-overlay" style="display:none;" onclick="if(event.target === this) closeInstallGuide()">
         <div class="modal-content">
             <div class="modal-header">
                 <button class="icon-btn close-modal" onclick="closeInstallGuide()" title="Cerrar">✕</button>
@@ -230,6 +219,6 @@
     <audio id="yape-sound" src="https://www.myinstants.com/media/sounds/yape-notificacion.mp3" preload="auto"></audio>
 
     <!-- Scripts -->
-    <script src="app.js?v=42"></script>
+    <script src="app.js?v=43"></script>
 </body>
 </html>

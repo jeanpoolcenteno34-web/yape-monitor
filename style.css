@@ -550,6 +550,8 @@ select.search-bar option {
     border-radius: 24px;
     width: 90%;
     max-width: 500px;
+    max-height: 90vh; /* Ensure it fits on screen */
+    overflow-y: auto; /* Make it scrollable */
     position: relative; /* For absolute close button */
     border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
