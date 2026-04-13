@@ -1000,6 +1000,31 @@ input:checked + .slider:before { transform: translateX(22px); }
     background: rgba(0, 0, 0, 0.3);
 }
 
+.password-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.password-wrapper input {
+    padding-right: 50px; /* Espacio para el ojo */
+}
+
+.toggle-password {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    font-size: 1.2rem;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+    user-select: none;
+}
+
+.toggle-password:hover {
+    opacity: 1;
+}
+
 .auth-footer {
     margin-top: 25px !important;
 }

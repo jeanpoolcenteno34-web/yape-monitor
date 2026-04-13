@@ -56,6 +56,11 @@ async function handleLogin() {
 
     if (!email || !password) return alert("Por favor, completa todos los campos.");
 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        return alert("Por favor, ingresa un correo electrónico válido (ejemplo@correo.com).");
+    }
+
     try {
         const res = await fetch('/api/auth/login', {
             method: 'POST',
@@ -87,6 +92,11 @@ async function handleRegister() {
 
     if (!full_name || !email || !password) {
         return alert("Completa los campos obligatorios (*)");
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        return alert("Por favor, ingresa un correo electrónico válido.");
     }
 
     if (password.length < 8) {
@@ -379,4 +389,16 @@ function initAudioUnlocker() {
         document.removeEventListener('click', unlock);
     };
     document.addEventListener('click', unlock);
+}
+
+function togglePassword(inputId) {
+    const input = document.getElementById(inputId);
+    const icon = input.nextElementSibling;
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.innerText = '🔒';
+    } else {
+        input.type = 'password';
+        icon.innerText = '👁️';
+    }
 }

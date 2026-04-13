@@ -45,7 +45,10 @@
                 </div>
                 <div class="input-group">
                     <label>Contraseña</label>
-                    <input type="password" id="login-password" placeholder="••••••••">
+                    <div class="password-wrapper">
+                        <input type="password" id="login-password" placeholder="••••••••">
+                        <span class="toggle-password" onclick="togglePassword('login-password')">👁️</span>
+                    </div>
                 </div>
                 <button class="btn-start btn-auth" onclick="handleLogin()">INICIAR SESIÓN</button>
                 <p class="auth-footer">¿No tienes cuenta? <a href="#" onclick="toggleAuth('register')">Regístrate</a></p>
@@ -65,7 +68,10 @@
                 </div>
                 <div class="input-group">
                     <label>Contraseña (mín. 8 caracteres)</label>
-                    <input type="password" id="reg-password" placeholder="••••••••">
+                    <div class="password-wrapper">
+                        <input type="password" id="reg-password" placeholder="••••••••">
+                        <span class="toggle-password" onclick="togglePassword('reg-password')">👁️</span>
+                    </div>
                 </div>
                 <div class="input-group">
                     <label>Número Yape (Opcional)</label>
