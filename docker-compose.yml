@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  # Base de Datos Soberana
+  db:
+    image: postgres:15-alpine
+    container_name: yape-monitor-db
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER:-yape_admin}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-yape_password_strong}
+      POSTGRES_DB: ${DB_NAME:-yape_monitor}
+    volumes:
+      - ./data/db:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - yape-network
+
+  # API Central (ARM 64 compatible)
+  api:
+    build: .
+    container_name: yape-monitor-api
+    restart: always
+    environment:
+      PORT: 3000
+      DATABASE_URL: postgresql://${DB_USER:-yape_admin}:${DB_PASSWORD:-yape_password_strong}@db:5432/${DB_NAME:-yape_monitor}
+      JWT_SECRET: ${JWT_SECRET:-super_secret_key_change_me}
+      ADMIN_INVITE_CODE: ${ADMIN_INVITE_CODE:-YAPE2026PRO} # Código maestro para generar invitaciones
+    depends_on:
+      - db
+    networks:
+      - yape-network
+
+  # Proxy con Certificados SSL Automáticos (Caddy)
+  proxy:
+    image: caddy:2-alpine
+    container_name: yape-monitor-proxy
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - ./data/caddy_data:/data
+      - ./data/caddy_config:/config
+    depends_on:
+      - api
+    networks:
+      - yape-network
+
+networks:
+  yape-network:
+    driver: bridge

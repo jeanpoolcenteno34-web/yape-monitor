@@ -1,0 +1,17 @@
+{
+  # Global options (opcional)
+}
+
+# Dominio principal para la API
+# Reemplazar con yapemonitor.app cuando se configure el DNS
+:80, :443 {
+    reverse_proxy api:3000
+
+    # Compresión gzip/zstd
+    encode zstd gzip
+
+    # Logs de acceso
+    log {
+        output file /data/access.log
+    }
+}
