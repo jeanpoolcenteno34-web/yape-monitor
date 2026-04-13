@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>YAPEOS - Monitor 24/7</title>
+
+    <!-- PWA & SEO -->
+    <meta name="color-scheme" content="light dark">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0b1120">
+    <link rel="icon" type="image/png" href="icon-512.png">
+    <link rel="apple-touch-icon" href="icon-512.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Yapi">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="description" content="Monitoreo de pagos Yape en tiempo real 24/7">
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+
+    <!-- Socket.io for Instant Speed -->
+    <script src="/socket.io/socket.io.js"></script>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="style.css?v=44">
+</head>
+
+<body>
+
+    <!-- Pantalla de Autenticación -->
+    <div id="auth-screen" class="auth-screen">
+        <div class="auth-card glass-container">
+            <div class="logo">YAPE<span>OS</span> <small>Pro</small></div>
+            
+            <!-- Formulario de LOGIN -->
+            <div id="login-form">
+                <h2>Bienvenido</h2>
+                <p>Ingresa tus credenciales para continuar</p>
+                <div class="input-group">
+                    <label>Correo Electrónico</label>
+                    <input type="email" id="login-email" placeholder="ejemplo@correo.com">
+                </div>
+                <div class="input-group">
+                    <label>Contraseña</label>
+                    <input type="password" id="login-password" placeholder="••••••••">
+                </div>
+                <button class="btn-start" onclick="handleLogin()">INICIAR SESIÓN</button>
+                <p class="auth-footer">¿No tienes cuenta? <a href="#" onclick="toggleAuth('register')">Regístrate</a></p>
+            </div>
+
+            <!-- Formulario de REGISTRO -->
+            <div id="register-form" style="display:none;">
+                <h2>Crear Cuenta</h2>
+                <p>Únete a la red soberana de monitoreo</p>
+                <div class="input-group">
+                    <label>Nombre Completo</label>
+                    <input type="text" id="reg-name" placeholder="Juan Pérez">
+                </div>
+                <div class="input-group">
+                    <label>Correo Electrónico</label>
+                    <input type="email" id="reg-email" placeholder="ejemplo@correo.com">
+                </div>
+                <div class="input-group">
+                    <label>Contraseña (mín. 8 caracteres)</label>
+                    <input type="password" id="reg-password" placeholder="••••••••">
+                </div>
+                <div class="input-group">
+                    <label>Número Yape (Opcional)</label>
+                    <input type="text" id="reg-yape" placeholder="987654321">
+                </div>
+                <div class="input-group">
+                    <label>Código de Invitación</label>
+                    <input type="text" id="reg-invite" placeholder="YAPE2026PRO">
+                </div>
+                <button class="btn-start" onclick="handleRegister()">REGISTRARSE</button>
+                <p class="auth-footer">¿Ya tienes cuenta? <a href="#" onclick="toggleAuth('login')">Inicia sesión</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pantalla de Aplicación Principal -->
+    <div id="app-screen" class="app-layout" style="display:none;">
+        <div class="glass-container">
+            <!-- Header for PDF Export (Hidden in UI) -->
+            <div id="print-header" class="print-only">
+                <div style="text-align:center; margin-bottom: 20px;">
+                    <h1 style="color:#009374; font-size: 2.5rem; margin-bottom: 5px;">YAPEOS</h1>
+                    <p style="text-transform: uppercase; font-weight: 800; letter-spacing: 2px; color: #1e293b;">Reporte de Cierre Diario</p>
+                    <div id="print-date" style="margin-top: 10px; font-weight: 600;"></div>
+                </div>
+                <div class="print-summary" style="display:flex; justify-content: space-around; background: #f8fafc; padding: 20px; border-radius: 15px; border: 1px solid #e2e8f0; margin-bottom: 30px;">
+                    <div style="text-align:center;">
+                        <p style="font-size: 0.8rem; color: #64748b; text-transform: uppercase;">Total Recibido</p>
+                        <h2 id="print-total" style="font-size: 1.8rem; color: #1e293b;">S/ 0.00</h2>
+                    </div>
+                    <div style="text-align:center;">
+                        <p style="font-size: 0.8rem; color: #64748b; text-transform: uppercase;">Total Ventas</p>
+                        <h2 id="print-count" style="font-size: 1.8rem; color: #1e293b;">0</h2>
+                    </div>
+                </div>
+            </div>
+
+            <header class="nutri-header">
+                <div class="logo-group">
+                    <div class="logo">YAPE<span>OS</span></div>
+                </div>
+                <!-- App Controls -->
+                <div class="app-controls">
+                    <button id="btn-settings" class="icon-btn" title="Configuración" onclick="showSettings()">⚙️</button>
+                    <div class="status-badge">
+                        <span class="status-dot online"></span>
+                        <span class="status-label" id="status-text">CONECTADO</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Store Tabs (Carpeta) -->
+            <div class="store-tabs">
+                <button id="tab-all" class="store-tab active" onclick="switchStore('All')">Todos los Pagos</button>
+                <button id="tab-benito" class="store-tab" onclick="switchStore('Benito')">📁 Tienda Benito</button>
+            </div>
+
+            <!-- Selector de Días (Horizontal Scroll) -->
+            <div id="date-selector" class="date-selector">
+                <!-- Los días se cargarán aquí dinámicamente -->
+            </div>
+
+            <div class="summary">
+                <div class="card total">
+                    <h3 id="total-label">Total Recibido</h3>
+                    <p id="t-amount">S/ 0.00</p>
+                </div>
+                <div class="card">
+                    <h3 id="count-label">Ventas Hoy</h3>
+                    <p id="t-count">0</p>
+                </div>
+            </div>
+
+            <div class="section-actions">
+                <input type="text" id="search-bar" class="search-bar" placeholder="🔍 Buscar nombre o monto..." onkeyup="handleSearch()">
+                <div class="section-header">
+                    <h2 id="view-title">YAPEOS DEL DÍA</h2>
+                </div>
+            </div>
+
+            <div id="notifications-list" class="notifications-list vertical">
+                <!-- Las notificaciones aparecerán aquí -->
+            </div>
+
+            <button id="btn-start" class="btn-start" onclick="initSystem()">RECONECTAR</button>
+            <button id="btn-export" class="btn-start btn-export" onclick="exportData()" style="display:block;">📄 Cierre Diario (PDF)</button>
+            
+            <!-- Floating Banner for Multi Selection -->
+            <div id="multi-select-banner" class="floating-banner" style="display:none;">
+                <span id="select-count">0 seleccionados</span>
+                <div style="display:flex; gap:10px;">
+                    <button onclick="markSelectedAsBenito()" class="btn-mark-store">🏷️ Marcar Benito</button>
+                    <button onclick="unmarkSelectedFromBenito()" class="btn-mark-store" style="background:var(--bg-dark); border-color:var(--text-secondary); color:var(--text-secondary);">✕ Desmarcar</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="qr-column">
+            <div class="qr-card">
+                <h2>Paga con Yape</h2>
+                <div class="qr-wrapper">
+                    <img src="yape_qr.png" alt="QR de Yape" />
+                </div>
+                <p>Escanea el código para pagar</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Configuración -->
+    <div id="settings-modal" class="modal-overlay" style="display:none;" onclick="if(event.target === this) closeSettings()">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button class="icon-btn close-modal" onclick="closeSettings()" title="Cerrar">✕</button>
+                <h2>⚙️ Configuración</h2>
+            </div>
+            
+            <div class="settings-group">
+                <label>Tema de la Aplicación</label>
+                <div class="toggle-row">
+                    <span>Modo Claro / Oscuro</span>
+                    <label class="switch">
+                        <input type="checkbox" id="theme-toggle" onchange="toggleTheme()">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+                <div class="toggle-row" style="margin-top:15px;">
+                    <span>Animaciones de Contadores ⚡</span>
+                    <label class="switch">
+                        <input type="checkbox" id="anim-toggle" onchange="toggleAnimations()" checked>
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+                <div class="toggle-row" style="margin-top:15px;">
+                    <span>Animación de Lista (Entrada) 🎬</span>
+                    <label class="switch">
+                        <input type="checkbox" id="list-anim-toggle" onchange="toggleListAnimations()" checked>
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+                <div class="toggle-row" style="margin-top:15px;">
+                    <span>Convertir en App Real</span>
+                    <button class="btn-action" onclick="showInstallGuide()" style="border-color: var(--accent); color: var(--accent);">Instalar 📲</button>
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <label>Avisos y Sonidos</label>
+                <div class="toggle-row">
+                    <span>Alertas con Sonido 🔊</span>
+                    <label class="switch">
+                        <input type="checkbox" id="notif-toggle" onchange="toggleNotifications()" checked>
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+                <div class="toggle-row" style="margin-top:15px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 15px;">
+                    <div style="flex:1;">
+                        <span style="font-size:0.9rem; display:block;">Notificaciones en Pantalla 📱</span>
+                        <span id="push-status-label" style="font-size:0.75rem; color:var(--text-secondary);">Aún no permitido</span>
+                    </div>
+                    <button id="btn-request-push" class="btn-action" style="font-size:0.75rem; display:none;">Cómo activar ℹ️</button>
+                    <label class="switch" id="push-auth-switch">
+                        <input type="checkbox" id="push-toggle" onchange="toggleAndRequestPush()">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="settings-group">
+                <label>Cuenta</label>
+                <div class="toggle-row">
+                    <span>Sesión Activa</span>
+                    <button class="btn-action" onclick="handleLogout()" style="border-color: #ff4757; color: #ff4757;">Cerrar Sesión 🚪</button>
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <p style="font-size:0.8rem; color:var(--text-secondary); text-align:center; margin-bottom:5px;">Cambios se guardan automáticamente</p>
+                <p style="font-size:0.6rem; color:var(--accent); text-align:center; opacity:0.6;">Build Version: 44 PRO</p>
+            </div>
+        </div>
+    </div>
+    </div> <!-- FIN DE APP-SCREEN -->
+
+
+
+    <!-- Modal de Guía de Instalación -->
+    <div id="install-modal" class="modal-overlay" style="display:none;" onclick="if(event.target === this) closeInstallGuide()">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button class="icon-btn close-modal" onclick="closeInstallGuide()" title="Cerrar">✕</button>
+                <h2>📲 Instalar App</h2>
+            </div>
+            <div class="install-guide">
+                <img src="icon-512.png" alt="App Icon" style="width: 80px; height: 80px; border-radius: 20px; margin-bottom: 15px;">
+                <h3>Yapi - Monitor Live</h3>
+                <p>Para usarlo como una aplicación real sin navegador:</p>
+                <ol style="text-align: left; margin: 20px 0; padding-left: 20px; line-height: 1.6;">
+                    <li>Haz clic en los <span style="color:var(--accent); font-weight:800;">tres puntos (⋮)</span> de tu navegador arriba a la derecha.</li>
+                    <li>Busca la opción que dice <span style="color:var(--accent); font-weight:800;">"Instalar aplicación"</span> o <span style="color:var(--accent); font-weight:800;">"Agregar a la pantalla de inicio"</span>.</li>
+                    <li>¡Listo! Ahora búscala en tu menú de aplicaciones como <span style="color:var(--accent); font-weight:800;">"Yapi"</span>.</li>
+                </ol>
+                <p style="font-size: 0.8rem; opacity: 0.7;">Esto activará las animaciones premium y ocultará la barra de navegación del navegador.</p>
+                <button class="btn-start" onclick="closeInstallGuide()" style="display:block; margin-top: 20px; width: 100%;">Entendido</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audio para notificaciones -->
+    <audio id="yape-sound" src="https://www.myinstants.com/media/sounds/yape-notificacion.mp3" preload="auto"></audio>
+
+    <!-- Scripts -->
+    <script src="app.js?v=43"></script>
+</body>
+</html>

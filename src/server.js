@@ -3,6 +3,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const { Pool } = require('pg');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
@@ -14,6 +15,9 @@ const io = new Server(server, {
 // Middlewares
 app.use(cors());
 app.use(express.json());
+
+// Servir archivos estáticos del frontend
+app.use(express.static(path.join(__dirname, '../public')));
 
 // Database Connection
 const pool = new Pool({
@@ -27,9 +31,14 @@ pool.on('error', (err) => console.error('--- [DB] Error inesperado:', err));
 app.set('db', pool);
 app.set('io', io);
 
-// Rutas (Se crearán a continuación)
+// Rutas API
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/notifications', require('./routes/notifications'));
+
+// Fallback para SPA: Servir index.html para cualquier ruta no reconocida por la API
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/index.html'));
+});
 
 // Socket.io Logic
 io.on('connection', (socket) => {
@@ -50,3 +59,4 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`--- [SERVER] Yape Monitor Pro escuchando en puerto ${PORT} ---`);
 });
+

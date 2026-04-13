@@ -75,7 +75,9 @@ router.post('/invite', async (req, res) => {
   const { master_code, code_to_create } = req.body;
   const db = req.app.get('db');
 
-  if (master_code !== process.env.ADMIN_INVITE_CODE) {
+  const master_code_env = process.env.ADMIN_INVITE_CODE || process.env.adminInviteCode;
+
+  if (master_code !== master_code_env) {
     return res.status(403).json({ error: 'Código maestro incorrecto.' });
   }
 
