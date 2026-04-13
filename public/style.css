@@ -62,6 +62,8 @@ body {
     width: 100%;
     max-width: 900px;
     align-items: flex-start;
+    position: relative;
+    z-index: 10;
 }
 
 .glass-container {
@@ -559,7 +561,12 @@ select.search-bar option {
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 999;
+    z-index: 3000; /* Superior a todo el app y auth screen */
+    pointer-events: auto;
+}
+
+.modal-overlay[style*="display: none"] {
+    pointer-events: none !important;
 }
 
 .modal-content {
@@ -939,6 +946,13 @@ input:checked + .slider:before { transform: translateX(22px); }
     z-index: 2000;
     padding: 40px 20px;
     overflow-y: auto; /* Habilita scroll vertical */
+    transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.auth-screen[style*="display: none"] {
+    pointer-events: none !important;
+    opacity: 0;
+    transform: scale(1.1);
 }
 
 .auth-card {
@@ -947,6 +961,29 @@ input:checked + .slider:before { transform: translateX(22px); }
     max-width: 400px; /* Tamaño consistente */
     margin: auto; /* Centrado dentro del scroll */
     padding-bottom: 30px;
+    animation: authSlideIn 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+@keyframes authSlideIn {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes authFadeOut {
+    from { opacity: 1; transform: scale(1); }
+    to { opacity: 0; transform: scale(0.95); }
+}
+
+.loading-pulse {
+    animation: btnPulse 1.5s infinite;
+    pointer-events: none;
+    opacity: 0.8;
+}
+
+@keyframes btnPulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.4; }
+    100% { opacity: 1; }
 }
 
 .auth-card .logo {
@@ -1049,7 +1086,35 @@ input:checked + .slider:before { transform: translateX(22px); }
     font-weight: 700;
 }
 
+/* Toast Notifications */
+.toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--bg-card);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 16px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    z-index: 5000;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    opacity: 0;
+    border: 1px solid var(--glass-border);
+}
+
+.toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+}
+
+.toast-success { border-color: var(--accent); color: var(--accent); }
+.toast-error { border-color: #ff4757; color: #ff4757; }
+.toast-info { border-color: #3498db; color: #3498db; }
+
 @keyframes modalPop {
     from { opacity: 0; transform: scale(0.95) translateY(20px); }
     to { opacity: 1; transform: scale(1) translateY(0); }
-}
+}

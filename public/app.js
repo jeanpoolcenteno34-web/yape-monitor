@@ -28,14 +28,43 @@ function checkAuth() {
 }
 
 function showAuth() {
-    document.getElementById('auth-screen').style.display = 'flex';
-    document.getElementById('app-screen').style.display = 'none';
+    const appScreen = document.getElementById('app-screen');
+    const authScreen = document.getElementById('auth-screen');
+    
+    authScreen.style.display = 'flex';
+    authScreen.style.opacity = '0';
+    authScreen.style.transform = 'scale(1.1)';
+    
+    setTimeout(() => {
+        authScreen.style.opacity = '1';
+        authScreen.style.transform = 'scale(1)';
+        appScreen.style.display = 'none';
+    }, 50);
 }
 
 function showApp() {
-    document.getElementById('auth-screen').style.display = 'none';
-    document.getElementById('app-screen').style.display = 'flex';
-    initSystem();
+    const authScreen = document.getElementById('auth-screen');
+    const appScreen = document.getElementById('app-screen');
+
+    // Animación de salida Auth
+    authScreen.classList.add('auth-fade-out'); // Necesitaremos esta clase en el CSS o manejarla por estilo inline
+    authScreen.style.opacity = '0';
+    authScreen.style.transform = 'scale(0.95)';
+
+    setTimeout(() => {
+        authScreen.style.display = 'none';
+        authScreen.classList.remove('auth-fade-out');
+        appScreen.style.display = 'flex';
+        appScreen.style.opacity = '0';
+        appScreen.style.transform = 'translateY(20px)';
+        
+        setTimeout(() => {
+            appScreen.style.transition = 'all 0.5s ease';
+            appScreen.style.opacity = '1';
+            appScreen.style.transform = 'translateY(0)';
+            initSystem();
+        }, 50);
+    }, 400); // Coincide con la transición CSS
 }
 
 function toggleAuth(mode) {
@@ -61,6 +90,9 @@ async function handleLogin() {
         return alert("Por favor, ingresa un correo electrónico válido (ejemplo@correo.com).");
     }
 
+    const btn = event.target.closest('button');
+    if (btn) btn.classList.add('loading-pulse');
+
     try {
         const res = await fetch('/api/auth/login', {
             method: 'POST',
@@ -74,13 +106,16 @@ async function handleLogin() {
             user = data.user;
             localStorage.setItem('yape_token', token);
             localStorage.setItem('yape_user', JSON.stringify(user));
+            showToast(`¡Bienvenido de nuevo, ${user.name}!`, "success");
             showApp();
         } else {
-            alert(data.error || "Error al iniciar sesión");
+            if (btn) btn.classList.remove('loading-pulse');
+            showToast(data.error || "Error al iniciar sesión", "error");
         }
     } catch (e) {
+        if (btn) btn.classList.remove('loading-pulse');
         console.error(e);
-        alert("Error de conexión con el servidor.");
+        showToast("Error de conexión con el servidor", "error");
     }
 }
 
@@ -103,6 +138,9 @@ async function handleRegister() {
         return alert("La contraseña debe tener al menos 8 caracteres.");
     }
 
+    const btn = event.target.closest('button');
+    if (btn) btn.classList.add('loading-pulse');
+
     try {
         const res = await fetch('/api/auth/register', {
             method: 'POST',
@@ -112,21 +150,27 @@ async function handleRegister() {
         const data = await res.json();
 
         if (res.ok) {
-            alert("¡Registro exitoso! Ahora puedes iniciar sesión.");
-            toggleAuth('login');
+            showToast("¡Registro exitoso! Iniciando...", "success");
+            setTimeout(() => toggleAuth('login'), 1000);
         } else {
-            alert(data.error || "Error en el registro");
+            showToast(data.error || "Error en el registro", "error");
         }
+        if (btn) btn.classList.remove('loading-pulse');
     } catch (e) {
+        if (btn) btn.classList.remove('loading-pulse');
         console.error(e);
-        alert("Error de conexión.");
+        showToast("Error de conexión.", "error");
     }
 }
 
 function handleLogout() {
     localStorage.removeItem('yape_token');
     localStorage.removeItem('yape_user');
-    window.location.reload();
+    token = null;
+    user = null;
+    if (socket) socket.disconnect();
+    showToast("Sesión cerrada correctamente", "info");
+    showAuth();
 }
 
 // --- NÚCLEO DEL DASHBOARD ---
@@ -486,4 +530,19 @@ function togglePassword(inputId) {
         input.type = 'password';
         icon.innerText = '👁️';
     }
+}
+
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.innerText = message;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.classList.add('show');
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 400);
+        }, 3000);
+    }, 100);
 }
