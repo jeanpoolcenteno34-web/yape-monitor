@@ -207,12 +207,6 @@
                         <span class="slider round"></span>
                     </label>
                 </div>
-                <div class="toggle-row" style="margin-top:15px;">
-                    <span>Convertir en App Real</span>
-                    <button class="btn-action" onclick="showInstallGuide()" style="border-color: var(--accent); color: var(--accent);">Instalar 📲</button>
-                </div>
-            </div>
-
             <div class="settings-group">
                 <label>Avisos y Sonidos</label>
                 <div class="toggle-row">
@@ -221,6 +215,14 @@
                         <input type="checkbox" id="notif-toggle" onchange="toggleNotifications()" checked>
                         <span class="slider round"></span>
                     </label>
+                </div>
+                <div class="toggle-row" style="margin-top:15px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 15px;">
+                    <span style="font-size:0.9rem;">Elegir Sonido</span>
+                    <select id="sound-select" class="search-bar" onchange="changeSound(this.value)" style="width: auto; padding: 6px 12px; font-size: 0.8rem;">
+                        <option value="https://www.myinstants.com/media/sounds/yape-notificacion.mp3">Yape Clásico 📱</option>
+                        <option value="https://actions.google.com/sounds/v1/alarms/beep_short.ogg">Campana 🔔</option>
+                        <option value="https://actions.google.com/sounds/v1/commerce/cash_register_purchase.ogg">Dinero 💰</option>
+                    </select>
                 </div>
                 <div class="toggle-row" style="margin-top:15px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 15px;">
                     <div style="flex:1;">
@@ -245,35 +247,14 @@
 
             <div class="settings-group">
                 <p style="font-size:0.8rem; color:var(--text-secondary); text-align:center; margin-bottom:5px;">Cambios se guardan automáticamente</p>
-                <p style="font-size:0.6rem; color:var(--accent); text-align:center; opacity:0.6;">Build Version: 44 PRO</p>
+                <p style="font-size:0.6rem; color:var(--accent); text-align:center; opacity:0.6;">Build Version: 45 PRO</p>
             </div>
         </div>
     </div>
     </div> <!-- FIN DE APP-SCREEN -->
 
-
-
-    <!-- Modal de Guía de Instalación -->
-    <div id="install-modal" class="modal-overlay" style="display:none;" onclick="if(event.target === this) closeInstallGuide()">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button class="icon-btn close-modal" onclick="closeInstallGuide()" title="Cerrar">✕</button>
-                <h2>📲 Instalar App</h2>
-            </div>
-            <div class="install-guide">
-                <img src="icon-512.png" alt="App Icon" style="width: 80px; height: 80px; border-radius: 20px; margin-bottom: 15px;">
-                <h3>Yapi - Monitor Live</h3>
-                <p>Para usarlo como una aplicación real sin navegador:</p>
-                <ol style="text-align: left; margin: 20px 0; padding-left: 20px; line-height: 1.6;">
-                    <li>Haz clic en los <span style="color:var(--accent); font-weight:800;">tres puntos (⋮)</span> de tu navegador arriba a la derecha.</li>
-                    <li>Busca la opción que dice <span style="color:var(--accent); font-weight:800;">"Instalar aplicación"</span> o <span style="color:var(--accent); font-weight:800;">"Agregar a la pantalla de inicio"</span>.</li>
-                    <li>¡Listo! Ahora búscala en tu menú de aplicaciones como <span style="color:var(--accent); font-weight:800;">"Yapi"</span>.</li>
-                </ol>
-                <p style="font-size: 0.8rem; opacity: 0.7;">Esto activará las animaciones premium y ocultará la barra de navegación del navegador.</p>
-                <button class="btn-start" onclick="closeInstallGuide()" style="display:block; margin-top: 20px; width: 100%;">Entendido</button>
-            </div>
-        </div>
-    </div>
+    <!-- Modal de Guía (Ya no usado, se puede eliminar pero lo dejamos limpio para v45) -->
+    <div id="install-modal" class="modal-overlay" style="display:none;"></div>
 
     <!-- Audio para notificaciones -->
     <audio id="yape-sound" src="https://www.myinstants.com/media/sounds/yape-notificacion.mp3" preload="auto"></audio>

@@ -194,7 +194,7 @@ function handleIncomingNotification(data, source) {
     if (nk === selectedDateKey) renderNotifications();
     renderApp();
     playNotificationSound();
-    triggerNativeNotification(data.title || 'Yape Recibido', data.text || '');
+    triggerNativeNotification(data);
 }
 
 // --- UI RENDERING ---
@@ -343,11 +343,76 @@ function loadPreferences() {
     const isLight = localStorage.getItem('yapeos_theme') === 'light';
     if (isLight) document.body.classList.add('light-mode');
     if (document.getElementById('theme-toggle')) document.getElementById('theme-toggle').checked = isLight;
+
+    const savedSound = localStorage.getItem('yape_sound_url');
+    if (savedSound) {
+        const audio = document.getElementById('yape-sound');
+        const select = document.getElementById('sound-select');
+        if (audio) audio.src = savedSound;
+        if (select) select.value = savedSound;
+    }
+
+    const pushEnabled = localStorage.getItem('yapeos_push_enabled') === 'true';
+    if (document.getElementById('push-toggle')) document.getElementById('push-toggle').checked = pushEnabled;
+    
+    updatePushUI();
+}
+
+function updatePushUI() {
+    const label = document.getElementById('push-status-label');
+    const toggleInput = document.getElementById('push-toggle');
+    if (!label) return;
+
+    if (!("Notification" in window)) {
+        label.innerText = "No soportado";
+        return;
+    }
+
+    if (Notification.permission === "granted") {
+        label.innerText = "✅ PERMITIDO";
+        label.style.color = "var(--accent)";
+    } else if (Notification.permission === "denied") {
+        label.innerText = "🚫 BLOQUEADO";
+        label.style.color = "#ff4757";
+    } else {
+        label.innerText = "Aún no permitido";
+        label.style.color = "var(--text-secondary)";
+    }
 }
 
 function toggleTheme() {
     const isLight = document.body.classList.toggle('light-mode');
     localStorage.setItem('yapeos_theme', isLight ? 'light' : 'dark');
+}
+
+async function toggleAndRequestPush() {
+    const toggleInput = document.getElementById('push-toggle');
+    if (!toggleInput) return;
+
+    if (!("Notification" in window)) return alert("Tu navegador no soporta notificaciones.");
+
+    if (toggleInput.checked) {
+        const permission = await Notification.requestPermission();
+        if (permission === "granted") {
+            localStorage.setItem('yapeos_push_enabled', 'true');
+        } else {
+            toggleInput.checked = false;
+            localStorage.setItem('yapeos_push_enabled', 'false');
+            alert("Para recibir notificaciones, debes dar permiso en el navegador.");
+        }
+    } else {
+        localStorage.setItem('yapeos_push_enabled', 'false');
+    }
+    updatePushUI();
+}
+
+function changeSound(url) {
+    const audio = document.getElementById('yape-sound');
+    if (audio) {
+        audio.src = url;
+        localStorage.setItem('yape_sound_url', url);
+        audio.play().catch(() => {}); // Play sample
+    }
 }
 
 function getDateKey(dateInput) {
@@ -370,7 +435,7 @@ function handleSearch() {
     renderNotifications();
 }
 
-function showSettings() { document.getElementById('settings-modal').style.display = 'flex'; }
+function showSettings() { document.getElementById('settings-modal').style.display = 'flex'; loadPreferences(); }
 function closeSettings() { document.getElementById('settings-modal').style.display = 'none'; }
 
 function playNotificationSound() {
@@ -378,8 +443,28 @@ function playNotificationSound() {
     if (audio) audio.play().catch(() => {});
 }
 
-function triggerNativeNotification(title, body) {
-    if (Notification.permission === "granted") new Notification(title, { body, icon: 'icon-512.png' });
+function triggerNativeNotification(data) {
+    const pushEnabled = localStorage.getItem('yapeos_push_enabled') === 'true';
+    if (!pushEnabled || Notification.permission !== "granted") return;
+
+    const title = "🔔 Nuevo Yapeo Recibido";
+    let amount = data.amount ? `S/ ${parseFloat(data.amount).toFixed(2)}` : "Monto desconocido";
+    let sender = data.sender_name || "Remitente desconocido";
+    
+    // Intento de extracción si falta data explícita (fallback)
+    if (!data.amount || !data.sender_name) {
+        const m = (data.text || "").match(/S\/ ?(\d+(\.\d+)?)/i);
+        if (m) amount = `S/ ${m[1]}`;
+    }
+
+    const body = `${sender} te envió ${amount}`;
+    
+    new Notification(title, { 
+        body, 
+        icon: 'icon-512.png',
+        badge: 'icon-512.png',
+        vibrate: [200, 100, 200]
+    });
 }
 
 function initAudioUnlocker() {

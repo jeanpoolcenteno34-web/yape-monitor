@@ -11,15 +11,29 @@
 }
 
 body.light-mode {
-    /* Light Theme - High Contrast */
-    --bg-dark: #e2e8f0;
+    /* Light Theme - Clean Premium */
+    --bg-dark: #f0f2f5;
     --bg-card: #ffffff;
     --accent: #009374;
     --text-primary: #1e293b;
-    --text-secondary: #475569;
+    --text-secondary: #64748b;
     --glass: #ffffff;
-    --glass-border: rgba(0, 0, 0, 0.1);
-    --badge-bg: rgba(0, 168, 133, 0.15);
+    --glass-border: rgba(0, 0, 0, 0.05);
+    --badge-bg: rgba(0, 168, 133, 0.12);
+}
+
+body.light-mode .card, 
+body.light-mode .glass-container, 
+body.light-mode .auth-card,
+body.light-mode .modal-content {
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+body.light-mode .notification-item {
+    background: #ffffff;
+    border: 1px solid rgba(0,0,0,0.06);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
 }
 
 * {
