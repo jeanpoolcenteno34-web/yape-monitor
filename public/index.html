@@ -219,9 +219,9 @@
                 <div class="toggle-row" style="margin-top:15px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 15px;">
                     <span style="font-size:0.9rem;">Elegir Sonido</span>
                     <select id="sound-select" class="search-bar" onchange="changeSound(this.value)" style="width: auto; padding: 6px 12px; font-size: 0.8rem;">
-                        <option value="https://raw.githubusercontent.com/jeanpoolcenteno34-web/yape-monitor/main/public/yape_notificacion.mp3">Yape Clásico 📱</option>
-                        <option value="https://actions.google.com/sounds/v1/alarms/beep_short.ogg">Campana 🔔</option>
-                        <option value="https://actions.google.com/sounds/v1/commerce/cash_register_purchase.ogg">Dinero 💰</option>
+                        <option value="https://cdn.pixabay.com/audio/2022/03/10/audio_c8c8a14ec4.mp3">Yape Clásico 📱</option>
+                        <option value="https://cdn.pixabay.com/audio/2022/03/10/audio_502392476b.mp3">Campana 🔔</option>
+                        <option value="https://cdn.pixabay.com/audio/2021/08/04/audio_0625c1539c.mp3">Dinero 💰</option>
                     </select>
                 </div>
                 <div class="toggle-row" style="margin-top:15px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 15px;">
@@ -256,8 +256,8 @@
     <!-- Modal de Guía (Ya no usado, se puede eliminar pero lo dejamos limpio para v46) -->
     <div id="install-modal" class="modal-overlay" style="display:none;"></div>
 
-    <!-- Audio para notificaciones (Fuentes v46 Estables) -->
-    <audio id="yape-sound" preload="auto" crossorigin="anonymous" src="https://raw.githubusercontent.com/jeanpoolcenteno34-web/yape-monitor/main/public/yape_notificacion.mp3"></audio>
+    <!-- Audio para notificaciones (Fuentes v46 Estables con CORS) -->
+    <audio id="yape-sound" preload="auto" src="https://cdn.pixabay.com/audio/2022/03/10/audio_c8c8a14ec4.mp3"></audio>
 
     <script>
         // Pre-carga agresiva para evitar lag en sonidos
