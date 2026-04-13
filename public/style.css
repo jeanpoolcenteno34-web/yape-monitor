@@ -506,6 +506,10 @@ select.search-bar option {
     transition: transform 0.2s, box-shadow 0.2s;
 }
 
+.btn-auth {
+    display: block !important;
+}
+
 .btn-start:active {
     transform: scale(0.98);
 }
@@ -917,14 +921,18 @@ input:checked + .slider:before { transform: translateX(22px); }
     background: var(--bg-dark);
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start; /* Permite scroll desde el inicio */
     z-index: 2000;
-    padding: 20px;
+    padding: 40px 20px;
+    overflow-y: auto; /* Habilita scroll vertical */
 }
 
 .auth-card {
     text-align: center;
     width: 100%;
+    max-width: 400px; /* Tamaño consistente */
+    margin: auto; /* Centrado dentro del scroll */
+    padding-bottom: 30px;
 }
 
 .auth-card .logo {

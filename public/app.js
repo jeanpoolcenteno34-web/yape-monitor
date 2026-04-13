@@ -84,9 +84,8 @@ async function handleRegister() {
     const email = document.getElementById('reg-email').value;
     const password = document.getElementById('reg-password').value;
     const yape_number = document.getElementById('reg-yape').value;
-    const invite_code = document.getElementById('reg-invite').value;
 
-    if (!full_name || !email || !password || !invite_code) {
+    if (!full_name || !email || !password) {
         return alert("Completa los campos obligatorios (*)");
     }
 
@@ -98,7 +97,7 @@ async function handleRegister() {
         const res = await fetch('/api/auth/register', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password, invite_code, full_name, yape_number })
+            body: JSON.stringify({ email, password, full_name, yape_number })
         });
         const data = await res.json();
 

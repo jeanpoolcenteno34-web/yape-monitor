@@ -47,7 +47,7 @@
                     <label>Contraseña</label>
                     <input type="password" id="login-password" placeholder="••••••••">
                 </div>
-                <button class="btn-start" onclick="handleLogin()">INICIAR SESIÓN</button>
+                <button class="btn-start btn-auth" onclick="handleLogin()">INICIAR SESIÓN</button>
                 <p class="auth-footer">¿No tienes cuenta? <a href="#" onclick="toggleAuth('register')">Regístrate</a></p>
             </div>
 
@@ -71,11 +71,7 @@
                     <label>Número Yape (Opcional)</label>
                     <input type="text" id="reg-yape" placeholder="987654321">
                 </div>
-                <div class="input-group">
-                    <label>Código de Invitación</label>
-                    <input type="text" id="reg-invite" placeholder="YAPE2026PRO">
-                </div>
-                <button class="btn-start" onclick="handleRegister()">REGISTRARSE</button>
+                <button class="btn-start btn-auth" onclick="handleRegister()">REGISTRARSE</button>
                 <p class="auth-footer">¿Ya tienes cuenta? <a href="#" onclick="toggleAuth('login')">Inicia sesión</a></p>
             </div>
         </div>

@@ -4,25 +4,13 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const authMiddleware = require('../middleware/auth');
 
-// --- REGISTRO CON INVITACIÓN ---
+// --- REGISTRO PÚBLICO ---
 router.post('/register', async (req, res) => {
-  const { email, password, invite_code, full_name, yape_number } = req.body;
+  const { email, password, full_name, yape_number } = req.body;
   const db = req.app.get('db');
 
   try {
-    // 1. Verificar código de invitación
-    const inviteRes = await db.query(
-      'SELECT * FROM invitations WHERE code = $1 AND is_used = false',
-      [invite_code]
-    );
-
-    if (inviteRes.rows.length === 0) {
-      return res.status(400).json({ error: 'Código de invitación inválido o ya utilizado.' });
-    }
-
-    const invitation = inviteRes.rows[0];
-
-    // 2. Crear usuario
+    // 1. Crear usuario directamente
     const hashedPassword = await bcrypt.hash(password, 10);
     const userRes = await db.query(
       'INSERT INTO users (email, password_hash, full_name, yape_number) VALUES ($1, $2, $3, $4) RETURNING id, email',
@@ -31,14 +19,11 @@ router.post('/register', async (req, res) => {
 
     const newUser = userRes.rows[0];
 
-    // 3. Marcar invitación como usada
-    await db.query(
-      'UPDATE invitations SET is_used = true, used_by = $1 WHERE id = $2',
-      [newUser.id, invitation.id]
-    );
-
     res.status(201).json({ message: 'Usuario registrado con éxito.', user: newUser });
   } catch (err) {
+    if (err.code === '23505') { // Unique violation
+        return res.status(400).json({ error: 'El correo electrónico ya está registrado.' });
+    }
     console.error(err);
     res.status(500).json({ error: 'Error en el registro.' });
   }
