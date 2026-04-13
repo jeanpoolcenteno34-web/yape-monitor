@@ -744,7 +744,32 @@ input:checked + .slider:before { transform: translateX(22px); }
 
     .app-layout {
         display: block !important;
-        max-width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+    }
+    
+    .glass-container {
+        border: none !important;
+        box-shadow: none !important;
+        background: white !important; /* Papel blanco */
+        color: black !important;
+    }
+
+    /* Ocultar botones y acciones en PDF */
+    .btn-start, .floating-banner, input[type="text"], .store-tabs, .date-selector, .notif-checkbox, .toggle-row, .app-controls {
+        display: none !important;
+    }
+
+    /* Ajustar colores para el papel */
+    * {
+        color: black !important;
+        text-shadow: none !important;
+        background: transparent !important;
+    }
+
+    .badge {
+        border: 1px solid #444 !important;
+        color: #444 !important;
     }
 
     /* Hide everything except print header and notifications */

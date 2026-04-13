@@ -37,7 +37,7 @@ router.get('/history', authMiddleware, async (req, res) => {
 
   try {
     const result = await db.query(
-      'SELECT * FROM notifications WHERE user_id = $1 ORDER BY timestamp_phone DESC LIMIT 200',
+      'SELECT * FROM notifications WHERE user_id = $1 ORDER BY timestamp_phone DESC LIMIT 1000',
       [userId]
     );
     res.json(result.rows);
@@ -88,6 +88,38 @@ router.patch('/:id', authMiddleware, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al actualizar la notificación.' });
+  }
+});
+
+// --- RUTA ADMIN: Restablecer día 13 y migrar histórico ---
+router.post('/admin/migrate', authMiddleware, async (req, res) => {
+  const { historyItems } = req.body;
+  const db = req.app.get('db');
+  const userId = req.user.id;
+
+  try {
+    // 1. Limpiar registros de hoy (13 de Abril) - "Ciclo desde cero el día Lunes 13"
+    await db.query(
+      `DELETE FROM notifications WHERE user_id = $1 AND timestamp_phone >= '2026-04-13 00:00:00-05'`,
+      [userId]
+    );
+
+    // 2. Evitar que se dupliquen historial si se llama varias veces (Borramos historial viejo)
+    // Asumimos que los items historicos llegarán con su propia fecha
+    if (historyItems && historyItems.length > 0) {
+      for (let notif of historyItems) {
+        await db.query(
+          `INSERT INTO notifications (user_id, title, text, amount, operation_code, sender_name, timestamp_phone) 
+           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+          [userId, notif.title, notif.text, notif.amount, notif.operation_code, notif.sender_name, notif.timestamp_phone]
+        );
+      }
+    }
+
+    res.json({ status: 'success', message: `Día 13 reiniciado. Insertados ${historyItems ? historyItems.length : 0} registros históricos.` });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error durante la migración.' });
   }
 });
 

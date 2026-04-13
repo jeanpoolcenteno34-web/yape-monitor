@@ -355,8 +355,49 @@ function updateStats() {
         dayCount++;
     });
 
-    document.getElementById('t-amount').innerText = `S/ ${dayTotal.toFixed(2)}`;
-    document.getElementById('t-count').innerText = dayCount;
+    // Animación de contadores
+    animateValue("t-amount", document.getElementById('t-amount').innerText, `S/ ${dayTotal.toFixed(2)}`, true);
+    animateValue("t-count", document.getElementById('t-count').innerText, dayCount, false);
+}
+
+function animateValue(id, startText, endValue, isCurrency) {
+    const obj = document.getElementById(id);
+    if (!obj) return;
+    
+    // Si no hay cambios o las animaciones están desactivadas, actualizar directo
+    const animEnabled = document.getElementById('anim-toggle') ? document.getElementById('anim-toggle').checked : true;
+    if (!animEnabled) {
+        obj.innerText = endValue;
+        return;
+    }
+
+    // Extraer valores numéricos
+    const startValue = parseFloat(startText.replace(/[^\d.]/g, '')) || 0;
+    const finalValue = typeof endValue === 'string' ? parseFloat(endValue.replace(/[^\d.]/g, '')) : endValue;
+    
+    if (startValue === finalValue) {
+        obj.innerText = endValue; // Asegurar formato exacto
+        return;
+    }
+
+    const duration = 800;
+    const startTime = performance.now();
+
+    function step(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const easeOutQuad = t => t * (2 - t);
+        const current = startValue + (finalValue - startValue) * easeOutQuad(progress);
+
+        obj.innerText = isCurrency ? `S/ ${current.toFixed(2)}` : Math.floor(current);
+
+        if (progress < 1) {
+            requestAnimationFrame(step);
+        } else {
+            obj.innerText = endValue;
+        }
+    }
+    requestAnimationFrame(step);
 }
 
 async function patchNotification(id, isMarking) {
@@ -471,7 +512,20 @@ function formatTime(dateStr) {
 
 function switchStore(tab) {
     currentStoreTab = tab;
+    localStorage.setItem('yapeos_last_tab', tab);
+    
+    // UI Pestañas
+    const tabAll = document.getElementById('tab-all');
+    const tabBenito = document.getElementById('tab-benito');
+    if (tabAll) tabAll.classList.toggle('active', tab === 'All');
+    if (tabBenito) tabBenito.classList.toggle('active', tab === 'Benito');
+    
     renderApp();
+}
+
+function exportData() {
+    console.log("--- [EXPORT] Preparando Cierre Diario PDF ---");
+    window.print();
 }
 
 function handleSearch() {
@@ -511,13 +565,69 @@ function triggerNativeNotification(data) {
     });
 }
 
-function initAudioUnlocker() {
-    const unlock = () => {
-        const audio = document.getElementById('yape-sound');
-        if (audio) { audio.play().then(() => { audio.pause(); audio.currentTime = 0; }); }
-        document.removeEventListener('click', unlock);
-    };
-    document.addEventListener('click', unlock);
+function handleSelect(id) {
+    if (selectedIds.has(id)) {
+        selectedIds.delete(id);
+    } else {
+        selectedIds.add(id);
+    }
+    updateSelectionUI();
+}
+
+function updateSelectionUI() {
+    const banner = document.getElementById('multi-select-banner');
+    const countLabel = document.getElementById('select-count');
+    
+    if (selectedIds.size > 0) {
+        banner.style.display = 'flex';
+        countLabel.innerText = `${selectedIds.size} seleccionados`;
+    } else {
+        banner.style.display = 'none';
+    }
+}
+
+async function markSelectedAsBenito() {
+    const idsToProcess = Array.from(selectedIds);
+    showToast(`Procesando ${idsToProcess.length} yapeos...`, "info");
+    
+    for (const id of idsToProcess) {
+        await patchNotification(id, true);
+    }
+    
+    selectedIds.clear();
+    updateSelectionUI();
+    showToast("¡Marcado masivo completado!", "success");
+    renderApp();
+}
+
+async function unmarkSelectedFromBenito() {
+    const idsToProcess = Array.from(selectedIds);
+    showToast(`Procesando ${idsToProcess.length} yapeos...`, "info");
+    
+    for (const id of idsToProcess) {
+        await patchNotification(id, false);
+    }
+    
+    selectedIds.clear();
+    updateSelectionUI();
+    showToast("¡Desmarcado masivo completado!", "success");
+    renderApp();
+}
+
+function exportData() {
+    const dateItem = document.querySelector('.date-item.active');
+    const dayName = dateItem.querySelector('.day-name').innerText;
+    const dayNum = dateItem.querySelector('.day-num').innerText;
+    
+    const now = new Date();
+    const year = now.getFullYear();
+    const monthName = now.toLocaleString('es-PE', { month: 'long' }).toUpperCase();
+    
+    document.getElementById('print-date').innerText = `REPORTE DEL ${dayName} ${dayNum} DE ${monthName} ${year}`;
+    document.getElementById('print-total').innerText = document.getElementById('t-amount').innerText;
+    document.getElementById('print-count').innerText = document.getElementById('t-count').innerText;
+    
+    window.print();
 }
 
 function togglePassword(inputId) {
@@ -546,3 +656,6 @@ function showToast(message, type = 'info') {
         }, 3000);
     }, 100);
 }
+
+// Inicializar al final
+initAudioUnlocker();
