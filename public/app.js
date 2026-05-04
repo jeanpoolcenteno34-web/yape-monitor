@@ -1,6 +1,7 @@
 // Estado Global
-let token = localStorage.getItem('yape_token') || null;
-let user = JSON.parse(localStorage.getItem('yape_user')) || null;
+// ⚠️ IMPORTANTE: CAMBIA ESTA URL POR LA URL DE TU BACKEND EN RENDER ⚠️
+const API_URL = "https://yape-monitor-api-tq2c.onrender.com"; // Ejemplo: https://tu-backend.onrender.com
+
 let socket = null;
 
 // Variables de UI
@@ -13,165 +14,13 @@ let selectedDateKey = '';
 // Al cargar el documento
 document.addEventListener('DOMContentLoaded', () => {
     loadPreferences();
-    checkAuth();
+    initSystem();
     initAudioUnlocker();
 });
 
 // --- AUTENTICACIÓN ---
 
-function checkAuth() {
-    if (token && user) {
-        showApp();
-    } else {
-        showAuth();
-    }
-}
-
-function showAuth() {
-    const appScreen = document.getElementById('app-screen');
-    const authScreen = document.getElementById('auth-screen');
-    
-    authScreen.style.display = 'flex';
-    authScreen.style.opacity = '0';
-    authScreen.style.transform = 'scale(1.1)';
-    
-    setTimeout(() => {
-        authScreen.style.opacity = '1';
-        authScreen.style.transform = 'scale(1)';
-        appScreen.style.display = 'none';
-    }, 50);
-}
-
-function showApp() {
-    const authScreen = document.getElementById('auth-screen');
-    const appScreen = document.getElementById('app-screen');
-
-    // Animación de salida Auth
-    authScreen.classList.add('auth-fade-out'); // Necesitaremos esta clase en el CSS o manejarla por estilo inline
-    authScreen.style.opacity = '0';
-    authScreen.style.transform = 'scale(0.95)';
-
-    setTimeout(() => {
-        authScreen.style.display = 'none';
-        authScreen.classList.remove('auth-fade-out');
-        appScreen.style.display = 'flex';
-        appScreen.style.opacity = '0';
-        appScreen.style.transform = 'translateY(20px)';
-        
-        setTimeout(() => {
-            appScreen.style.transition = 'all 0.5s ease';
-            appScreen.style.opacity = '1';
-            appScreen.style.transform = 'translateY(0)';
-            initSystem();
-        }, 50);
-    }, 400); // Coincide con la transición CSS
-}
-
-function toggleAuth(mode) {
-    const loginForm = document.getElementById('login-form');
-    const registerForm = document.getElementById('register-form');
-    if (mode === 'register') {
-        loginForm.style.display = 'none';
-        registerForm.style.display = 'block';
-    } else {
-        loginForm.style.display = 'block';
-        registerForm.style.display = 'none';
-    }
-}
-
-async function handleLogin() {
-    const email = document.getElementById('login-email').value;
-    const password = document.getElementById('login-password').value;
-
-    if (!email || !password) return alert("Por favor, completa todos los campos.");
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-        return alert("Por favor, ingresa un correo electrónico válido (ejemplo@correo.com).");
-    }
-
-    const btn = event.target.closest('button');
-    if (btn) btn.classList.add('loading-pulse');
-
-    try {
-        const res = await fetch('/api/auth/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
-        });
-        const data = await res.json();
-
-        if (res.ok) {
-            token = data.token;
-            user = data.user;
-            localStorage.setItem('yape_token', token);
-            localStorage.setItem('yape_user', JSON.stringify(user));
-            showToast(`¡Bienvenido de nuevo, ${user.name}!`, "success");
-            showApp();
-        } else {
-            if (btn) btn.classList.remove('loading-pulse');
-            showToast(data.error || "Error al iniciar sesión", "error");
-        }
-    } catch (e) {
-        if (btn) btn.classList.remove('loading-pulse');
-        console.error(e);
-        showToast("Error de conexión con el servidor", "error");
-    }
-}
-
-async function handleRegister() {
-    const full_name = document.getElementById('reg-name').value;
-    const email = document.getElementById('reg-email').value;
-    const password = document.getElementById('reg-password').value;
-    const yape_number = document.getElementById('reg-yape').value;
-
-    if (!full_name || !email || !password) {
-        return alert("Completa los campos obligatorios (*)");
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-        return alert("Por favor, ingresa un correo electrónico válido.");
-    }
-
-    if (password.length < 8) {
-        return alert("La contraseña debe tener al menos 8 caracteres.");
-    }
-
-    const btn = event.target.closest('button');
-    if (btn) btn.classList.add('loading-pulse');
-
-    try {
-        const res = await fetch('/api/auth/register', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password, full_name, yape_number })
-        });
-        const data = await res.json();
-
-        if (res.ok) {
-            showToast("¡Registro exitoso! Iniciando...", "success");
-            setTimeout(() => toggleAuth('login'), 1000);
-        } else {
-            showToast(data.error || "Error en el registro", "error");
-        }
-        if (btn) btn.classList.remove('loading-pulse');
-    } catch (e) {
-        if (btn) btn.classList.remove('loading-pulse');
-        console.error(e);
-        showToast("Error de conexión.", "error");
-    }
-}
-
-function handleLogout() {
-    localStorage.removeItem('yape_token');
-    localStorage.removeItem('yape_user');
-    token = null;
-    user = null;
-    if (socket) socket.disconnect();
-    showToast("Sesión cerrada correctamente", "info");
-    showAuth();
-}
+// --- FUNCIONES DE AUTH ELIMINADAS ---
 
 // --- NÚCLEO DEL DASHBOARD ---
 
@@ -194,10 +43,10 @@ async function initSystem() {
 
     // Conectar Socket.io
     if (typeof io !== 'undefined') {
-        socket = io();
+        socket = io(API_URL);
         socket.on('connect', () => {
             console.log("[SOCKET] Conectado - Uniendo a sala privada");
-            socket.emit('join', user.id);
+            socket.emit('join', 1); // Single user mode
             document.getElementById('status-text').innerText = "CONECTADO";
         });
         socket.on('disconnect', () => {
@@ -211,10 +60,7 @@ async function initSystem() {
 
 async function loadHistory() {
     try {
-        const res = await fetch('/api/notifications/history', {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (res.status === 401 || res.status === 403) return handleLogout();
+        const res = await fetch(API_URL + '/api/notifications/history');
         
         const data = await res.json();
         allNotifications = data || [];
@@ -407,11 +253,10 @@ async function patchNotification(id, isMarking) {
     const newText = isMarking ? (notif.text + ' [BENITO]') : notif.text.replace(' [BENITO]', '').replace('[BENITO]', '');
 
     try {
-        const res = await fetch(`/api/notifications/${id}`, {
+        const res = await fetch(API_URL + `/api/notifications/${id}`, {
             method: 'PATCH',
             headers: { 
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({ text: newText })
         });

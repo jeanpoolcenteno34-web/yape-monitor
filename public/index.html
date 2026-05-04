@@ -22,7 +22,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
 
     <!-- Socket.io for Instant Speed -->
-    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 
     <!-- Styles -->
     <link rel="stylesheet" href="style.css?v=44">
@@ -30,61 +30,8 @@
 
 <body>
 
-    <!-- Pantalla de Autenticación -->
-    <div id="auth-screen" class="auth-screen">
-        <div class="auth-card glass-container">
-            <div class="logo">YAPE<span>OS</span> <small>Pro</small></div>
-            
-            <!-- Formulario de LOGIN -->
-            <div id="login-form">
-                <h2>Bienvenido</h2>
-                <p>Ingresa tus credenciales para continuar</p>
-                <div class="input-group">
-                    <label>Correo Electrónico</label>
-                    <input type="email" id="login-email" placeholder="ejemplo@correo.com">
-                </div>
-                <div class="input-group">
-                    <label>Contraseña</label>
-                    <div class="password-wrapper">
-                        <input type="password" id="login-password" placeholder="••••••••">
-                        <span class="toggle-password" onclick="togglePassword('login-password')">👁️</span>
-                    </div>
-                </div>
-                <button class="btn-start btn-auth" onclick="handleLogin()">INICIAR SESIÓN</button>
-                <p class="auth-footer">¿No tienes cuenta? <a href="#" onclick="toggleAuth('register')">Regístrate</a></p>
-            </div>
-
-            <!-- Formulario de REGISTRO -->
-            <div id="register-form" style="display:none;">
-                <h2>Crear Cuenta</h2>
-                <p>Únete a la red soberana de monitoreo</p>
-                <div class="input-group">
-                    <label>Nombre Completo</label>
-                    <input type="text" id="reg-name" placeholder="Juan Pérez">
-                </div>
-                <div class="input-group">
-                    <label>Correo Electrónico</label>
-                    <input type="email" id="reg-email" placeholder="ejemplo@correo.com">
-                </div>
-                <div class="input-group">
-                    <label>Contraseña (mín. 8 caracteres)</label>
-                    <div class="password-wrapper">
-                        <input type="password" id="reg-password" placeholder="••••••••">
-                        <span class="toggle-password" onclick="togglePassword('reg-password')">👁️</span>
-                    </div>
-                </div>
-                <div class="input-group">
-                    <label>Número Yape (Opcional)</label>
-                    <input type="text" id="reg-yape" placeholder="987654321">
-                </div>
-                <button class="btn-start btn-auth" onclick="handleRegister()">REGISTRARSE</button>
-                <p class="auth-footer">¿Ya tienes cuenta? <a href="#" onclick="toggleAuth('login')">Inicia sesión</a></p>
-            </div>
-        </div>
-    </div>
-
     <!-- Pantalla de Aplicación Principal -->
-    <div id="app-screen" class="app-layout" style="display:none;">
+    <div id="app-screen" class="app-layout">
         <div class="glass-container">
             <!-- Header for PDF Export (Hidden in UI) -->
             <div id="print-header" class="print-only">
@@ -237,13 +184,7 @@
                 </div>
             </div>
             
-            <div class="settings-group">
-                <label>Cuenta</label>
-                <div class="toggle-row">
-                    <span>Sesión Activa</span>
-                    <button class="btn-action" onclick="handleLogout()" style="border-color: #ff4757; color: #ff4757;">Cerrar Sesión 🚪</button>
-                </div>
-            </div>
+            <!-- Auth settings removed -->
 
             <div class="settings-group">
                 <p style="font-size:0.8rem; color:var(--text-secondary); text-align:center; margin-bottom:5px;">Cambios se guardan automáticamente</p>
