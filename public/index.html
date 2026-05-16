@@ -24,6 +24,9 @@
     <!-- Socket.io for Instant Speed -->
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 
+    <!-- Charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <!-- Styles -->
     <link rel="stylesheet" href="style.css?v=44">
 </head>
@@ -85,6 +88,14 @@
                 <div class="card">
                     <h3 id="count-label">Ventas Hoy</h3>
                     <p id="t-count">0</p>
+                </div>
+            </div>
+
+            <!-- Dashboard Chart -->
+            <div class="card chart-card">
+                <h3>Tendencia de Ventas</h3>
+                <div class="chart-container">
+                    <canvas id="salesChart"></canvas>
                 </div>
             </div>
 

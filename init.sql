@@ -46,6 +46,11 @@ CREATE TABLE devices (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- 5. Usuario por defecto para uso personal
+INSERT INTO users (id, email, password_hash, full_name, yape_number) 
+VALUES (1, 'admin@yape.pro', '$2b$10$EixZ9dyJ97zWn.6.Y6.V3uJ3.I3.I3.I3.I3.I3.I3.I3.I3', 'Admin Personal', '900000000')
+ON CONFLICT (id) DO NOTHING;
+
 -- Índices para búsqueda rápida
 CREATE INDEX idx_notifications_user_id ON notifications(user_id);
 CREATE INDEX idx_notifications_timestamp_phone ON notifications(timestamp_phone);

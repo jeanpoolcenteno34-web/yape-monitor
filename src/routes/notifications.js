@@ -4,17 +4,33 @@ const authMiddleware = require('../middleware/auth');
 
 // --- REPORTAR NUEVA NOTIFICACIÓN (Desde la App Android) ---
 router.post('/report', authMiddleware, async (req, res) => {
-  const { title, text, amount, operation_code, sender_name, timestamp_phone } = req.body;
+  let { title, text, amount, operation_code, sender_name, timestamp_phone } = req.body;
   const db = req.app.get('db');
   const io = req.app.get('io');
   const userId = req.user.id;
+
+  // --- EXTRACCIÓN AUTOMÁTICA (Para compatibilidad con Automate) ---
+  if (!amount && text) {
+    const amountMatch = text.match(/S\/\.?\s*(\d+(?:[.,]\d+)?)/i);
+    if (amountMatch) amount = amountMatch[1].replace(',', '.');
+  }
+
+  if (!sender_name && text) {
+    // Intento de extraer nombre antes de "te envió"
+    const nameMatch = text.match(/^(.+?)\s+te\s+envi[óo]/i);
+    if (nameMatch) sender_name = nameMatch[1].trim();
+  }
+
+  if (!timestamp_phone) {
+    timestamp_phone = new Date().toISOString();
+  }
 
   try {
     // 1. Guardar en Base de Datos
     const result = await db.query(
       `INSERT INTO notifications (user_id, title, text, amount, operation_code, sender_name, timestamp_phone) 
        VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-      [userId, title, text, amount, operation_code, sender_name, timestamp_phone]
+      [userId, title, text, amount || 0, operation_code || null, sender_name || 'Desconocido', timestamp_phone]
     );
 
     const newNotif = result.rows[0];

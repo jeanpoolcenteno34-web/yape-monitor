@@ -10,6 +10,7 @@ let searchText = '';
 let selectedIds = new Set(); 
 let allNotifications = [];
 let selectedDateKey = '';
+let salesChart = null;
 
 // Al cargar el documento
 document.addEventListener('DOMContentLoaded', () => {
@@ -93,6 +94,7 @@ function renderApp() {
     renderDateSelector();
     renderNotifications();
     updateStats();
+    updateChart();
 }
 
 function renderDateSelector() {
@@ -204,6 +206,74 @@ function updateStats() {
     // Animación de contadores
     animateValue("t-amount", document.getElementById('t-amount').innerText, `S/ ${dayTotal.toFixed(2)}`, true);
     animateValue("t-count", document.getElementById('t-count').innerText, dayCount, false);
+}
+
+function updateChart() {
+    const ctx = document.getElementById('salesChart');
+    if (!ctx) return;
+
+    // Agrupar por hora
+    const hourlyData = new Array(24).fill(0);
+    allNotifications.forEach(n => {
+        const nDate = getDateKey(n.timestamp_phone || n.created_at);
+        if (nDate !== selectedDateKey) return;
+        
+        const date = new Date(n.timestamp_phone || n.created_at);
+        const hour = date.getHours();
+        hourlyData[hour] += parseFloat(n.amount) || 0;
+    });
+
+    const labels = Array.from({length: 24}, (_, i) => `${i}:00`);
+    
+    if (salesChart) {
+        salesChart.data.datasets[0].data = hourlyData;
+        salesChart.update();
+    } else {
+        const isLight = document.body.classList.contains('light-mode');
+        const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#00ffca';
+        
+        salesChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Ventas (S/)',
+                    data: hourlyData,
+                    borderColor: accentColor,
+                    backgroundColor: 'rgba(0, 255, 202, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    pointRadius: 0,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(255,255,255,0.05)' },
+                        ticks: { color: 'rgba(255,255,255,0.5)', font: { size: 10 } }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { 
+                            color: 'rgba(255,255,255,0.5)', 
+                            font: { size: 10 },
+                            maxRotation: 0,
+                            callback: function(val, index) {
+                                return index % 4 === 0 ? this.getLabelForValue(val) : '';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
 }
 
 function animateValue(id, startText, endValue, isCurrency) {
