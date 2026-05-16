@@ -1,8 +1,8 @@
 // Estado Global
-// ⚠️ IMPORTANTE: CAMBIA ESTA URL POR LA URL DE TU BACKEND EN RENDER ⚠️
-const API_URL = "https://yape-monitor-api-tq2c.onrender.com"; // Ejemplo: https://tu-backend.onrender.com
-
-let socket = null;
+// Supabase Configuration
+const supabaseUrl = 'https://qjekbbfskzyhjtuoepqj.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqZWtiYmZza3p5aGp0dW9lcHFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyOTQ2NjUsImV4cCI6MjA4Nzg3MDY2NX0.1srkJCZJ4ny5G52o76YNPZ2hzbuhgVFVSENNHKlADWE';
+const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 // Variables de UI
 let currentStoreTab = 'All';
@@ -39,41 +39,65 @@ async function initSystem() {
 
     renderApp();
     
-    // Cargar Historial desde API (Protegida)
+    // Cargar Historial desde Supabase
     await loadHistory();
 
-    // Conectar Socket.io
-    if (typeof io !== 'undefined') {
-        socket = io(API_URL);
-        socket.on('connect', () => {
-            console.log("[SOCKET] Conectado - Uniendo a sala privada");
-            socket.emit('join', 1); // Single user mode
-            document.getElementById('status-text').innerText = "CONECTADO";
-        });
-        socket.on('disconnect', () => {
-            document.getElementById('status-text').innerText = "RECONECTANDO...";
-        });
-        socket.on('new-yape', (data) => {
-            handleIncomingNotification(data, "Socket");
-        });
-    }
+    // Conectar Realtime de Supabase
+    document.getElementById('status-text').innerText = "CONECTADO";
+    
+    supabase
+      .channel('public:notificaciones')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notificaciones' }, payload => {
+          handleIncomingNotification(payload.new, "Supabase");
+      })
+      .subscribe();
 }
 
 async function loadHistory() {
     try {
-        const res = await fetch(API_URL + '/api/notifications/history');
+        document.getElementById('status-text').innerText = "CARGANDO...";
+        const { data, error } = await supabase
+            .from('notificaciones')
+            .select('*')
+            .order('timestamp', { ascending: false })
+            .limit(100);
+            
+        if (error) throw error;
         
-        const data = await res.json();
-        allNotifications = data || [];
+        allNotifications = (data || []).map(formatNotificationData);
+        document.getElementById('status-text').innerText = "CONECTADO";
         renderApp();
     } catch (e) {
         console.error("Error al cargar historial:", e);
+        document.getElementById('status-text').innerText = "ERROR DE CONEXIÓN";
     }
 }
 
-function handleIncomingNotification(data, source) {
+// Formateador para normalizar los datos que vienen de Supabase (que solo tiene text)
+function formatNotificationData(data) {
+    let amount = 0;
+    let sender_name = "Desconocido";
+    let text = data.text || "";
+
+    const amountMatch = text.match(/S\/\.?\s*(\d+(?:[.,]\d+)?)/i);
+    if (amountMatch) amount = parseFloat(amountMatch[1].replace(',', '.'));
+
+    const nameMatch = text.match(/^(.+?)\s+te\s+envi[óo]/i);
+    if (nameMatch) sender_name = nameMatch[1].trim();
+
+    return {
+        ...data,
+        amount: amount,
+        sender_name: sender_name,
+        created_at: data.timestamp // Supabase usa 'timestamp' en lugar de 'created_at' o 'timestamp_phone'
+    };
+}
+
+function handleIncomingNotification(rawData, source) {
+    const data = formatNotificationData(rawData);
+
     // Normalizar timestamp
-    const nk = getDateKey(data.timestamp_phone || data.created_at);
+    const nk = getDateKey(data.created_at);
     
     // De-duplicación local básica
     const isDup = allNotifications.some(old => old.id === data.id);
@@ -323,14 +347,12 @@ async function patchNotification(id, isMarking) {
     const newText = isMarking ? (notif.text + ' [BENITO]') : notif.text.replace(' [BENITO]', '').replace('[BENITO]', '');
 
     try {
-        const res = await fetch(API_URL + `/api/notifications/${id}`, {
-            method: 'PATCH',
-            headers: { 
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ text: newText })
-        });
-        if (res.ok) {
+        const { error } = await supabase
+            .from('notificaciones')
+            .update({ text: newText })
+            .eq('id', id);
+            
+        if (!error) {
             notif.text = newText;
             renderApp();
         }
